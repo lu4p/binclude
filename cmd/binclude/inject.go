@@ -1,7 +1,7 @@
 package main
 
 import (
-	"binclude"
+	"github.com/lu4p/binclude"
 	"go/ast"
 	"go/printer"
 	"go/token"
