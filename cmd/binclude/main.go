@@ -7,6 +7,7 @@ import (
 	"go/parser"
 	"go/token"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -20,12 +21,22 @@ var fset *token.FileSet
 
 func main() {
 	now := time.Now()
-	main1()
-	fmt.Println("Finished in:", time.Since(now))
+	log.SetPrefix("[binclude] ")
+	wd, err := os.Getwd()
+	if err != nil {
+		log.Fatalln("could not get wd:", err)
+	}
+
+	err = main1(wd)
+	if err != nil {
+		log.Fatalln("failed:", err)
+	}
+
+	fmt.Println("binclude finished in:", time.Since(now))
 }
 
-func main1() error {
-	paths, err := filepath.Glob("*.go")
+func main1(path string) error {
+	paths, err := filepath.Glob(filepath.Join(path, "*.go"))
 	if err != nil {
 		return err
 	}
@@ -134,17 +145,13 @@ func detectIncluded(files []*ast.File) ([]string, error) {
 		}
 
 		lit, ok := call.Args[0].(*ast.BasicLit)
-		if !ok {
-			panic(fmt.Sprintf("argument is not string literal"))
-		}
-
-		if lit.Kind != token.STRING {
-			panic(fmt.Sprintf("argument is not string literal"))
+		if !ok || lit.Kind != token.STRING {
+			log.Fatalln("argument is not string literal")
 		}
 
 		value, err := strconv.Unquote(lit.Value)
 		if err != nil {
-			panic(fmt.Sprintf("cannot unquote string: %v", err))
+			log.Fatalln("cannot unquote string:", err)
 		}
 
 		includedPaths = append(includedPaths, value)

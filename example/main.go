@@ -1,13 +1,15 @@
 package main
 
+//go:generate go run ../cmd/binclude/
+
 import (
-	"binclude"
 	"io/ioutil"
 	"log"
+
+	"github.com/lu4p/binclude"
 )
 
 func main() {
-	binclude.Debug = true
 	binclude.Include("./assets")
 	binclude.Include("file.txt")
 

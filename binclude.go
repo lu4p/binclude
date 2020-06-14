@@ -2,8 +2,6 @@ package binclude
 
 import (
 	"bytes"
-	"compress/gzip"
-	"encoding/base64"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -21,43 +19,6 @@ var Debug = false
 // Include this file/ directory (including subdirectories) relative to the package path (noop)
 // The path is walked via filepath.Walk and all files found are included
 func Include(name string) {}
-
-// StrToByte convert a base64 encoded string to byte
-func StrToByte(data string) []byte {
-	x, err := base64.StdEncoding.DecodeString(data)
-	if err != nil {
-		panic(err)
-	}
-	b := bytes.NewBuffer(x)
-	zw, err := gzip.NewReader(b)
-	if err != nil {
-		panic(err)
-	}
-
-	x, err = ioutil.ReadAll(zw)
-	if err != nil {
-		panic(err)
-	}
-
-	return x
-}
-
-// ByteToStr convert binary data to base64 encoded string
-func ByteToStr(data []byte) string {
-	var buf bytes.Buffer
-
-	zw := gzip.NewWriter(&buf)
-
-	if _, err := zw.Write(data); err != nil {
-		panic(err)
-	}
-
-	if err := zw.Close(); err != nil {
-		panic(err)
-	}
-
-	return base64.StdEncoding.EncodeToString(buf.Bytes())
-}
 
 // FileSystem implements access to a collection of named files.
 type FileSystem map[string]*File
@@ -115,11 +76,8 @@ func (fs FileSystem) ReadDir(dirname string) ([]os.FileInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	list, err := f.Readdir(-1)
+	list, _ := f.Readdir(-1)
 	f.Close()
-	if err != nil {
-		return nil, err
-	}
 	sort.Slice(list, func(i, j int) bool { return list[i].Name() < list[j].Name() })
 	return list, nil
 }
@@ -167,7 +125,7 @@ func (f *File) Size() int64 {
 // by Lstat, in directory order. Subsequent calls on the same file will yield
 // further FileInfos.
 func (f *File) Readdir(count int) (infos []os.FileInfo, err error) {
-	fileDir := f.path
+	fileDir := f.Name()
 	if !f.Mode.IsDir() {
 		fileDir = filepath.Dir(f.path)
 	}
@@ -180,10 +138,6 @@ func (f *File) Readdir(count int) (infos []os.FileInfo, err error) {
 		info, _ := file.Stat()
 
 		infos = append(infos, info)
-
-		if len(infos) == count {
-			break
-		}
 	}
 
 	return infos, nil
