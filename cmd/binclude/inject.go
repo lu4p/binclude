@@ -142,7 +142,7 @@ func generateFile(pkgName *ast.Ident, fs binclude.FileSystem) error {
 						},
 						Path: &ast.BasicLit{
 							Kind:  token.STRING,
-							Value: "\"binclude\"",
+							Value: "\"github.com/lu4p/binclude\"",
 						},
 					},
 					&ast.ImportSpec{
