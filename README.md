@@ -16,7 +16,7 @@ binclude is a tool for including static files into Go binaries.
 
 ## Install
 ```
-$ go get github.com/lu4p/binclude
+go get -u github.com/lu4p/binclude
 ```
 ## Usage
 ```go
@@ -60,6 +60,10 @@ func main() {
 ```
 To build use:
 ```
-$ go generate
-$ go build
+go generate
+go build
 ```
+## Compression
+Binclude does not do any compression on its own.
+
+This is intentional for simplicity, you can however reduce the final binary size by building without debug info (`go build -ldflags "-s -w"`) and compressing the the resulting binary with [upx](https://upx.github.io/) (`upx binname`).
