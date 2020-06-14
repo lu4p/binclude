@@ -1,13 +1,14 @@
 package binclude_test
 
 import (
-	"github.com/lu4p/binclude"
 	"bytes"
 	"crypto/rand"
 	"fmt"
 	"io/ioutil"
 	"testing"
 	"time"
+
+	"github.com/lu4p/binclude"
 )
 
 const (

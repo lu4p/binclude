@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/lu4p/binclude"
 	"errors"
 	"fmt"
 	"go/ast"
@@ -13,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/lu4p/binclude"
 )
 
 var fset *token.FileSet

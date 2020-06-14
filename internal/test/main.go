@@ -28,16 +28,10 @@ func main() {
 
 	infos, err := binFS.ReadDir("./assets")
 	if err != nil {
-		log.Fatalln("here", err)
-	}
-
-	infos, err = binFS.ReadDir("..")
-	if err != nil {
-		log.Fatalln("here", err)
+		log.Fatalln(err)
 	}
 
 	for _, info := range infos {
 		log.Println(info.Name())
 	}
-
 }

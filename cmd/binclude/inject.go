@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/lu4p/binclude"
 	"go/ast"
 	"go/printer"
 	"go/token"
 	"os"
 	"strconv"
+
+	"github.com/lu4p/binclude"
 )
 
 func dataAsByteSlice(data []byte) *ast.BasicLit {

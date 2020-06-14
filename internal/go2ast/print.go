@@ -22,20 +22,14 @@ type FieldFilter func(name string, value reflect.Value) bool
 // NotNilFilter returns true for field values that are not nil;
 // it returns false otherwise.
 func NotNilFilter(name string, v reflect.Value) bool {
-	if name == "Obj" {
-		return false
+	var blacklist = []string{
+		"If", "Return", "Func", "Opening", "Closing", "Colon", "brace", "paren", "brack", "Pos", "Obj",
 	}
 
-	if strings.Contains(name, "Pos") {
-		return false
-	}
-
-	if strings.Contains(name, "brace") || strings.Contains(name, "paren") || strings.Contains(name, "brack") {
-		return false
-	}
-
-	if name == "If" || name == "Return" || name == "Func" || name == "Opening" || name == "Closing" || name == "Colon" {
-		return false
+	for _, item := range blacklist {
+		if strings.Contains(name, item) {
+			return false
+		}
 	}
 
 	switch v.Kind() {
