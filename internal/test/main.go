@@ -21,9 +21,6 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	f, err = binFS.Open("./assets")
-	f.Stat()
-
 	log.Println(string(out))
 
 	infos, err := binFS.ReadDir("./assets")
