@@ -1,7 +1,7 @@
 package main
 
 import (
-	"binclude"
+	"github.com/lu4p/binclude"
 	"errors"
 	"fmt"
 	"go/ast"
