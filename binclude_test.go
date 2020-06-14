@@ -1,7 +1,7 @@
 package binclude_test
 
 import (
-	"binclude"
+	"github.com/lu4p/binclude"
 	"bytes"
 	"crypto/rand"
 	"fmt"
