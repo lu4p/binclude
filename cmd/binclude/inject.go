@@ -12,20 +12,15 @@ import (
 )
 
 func dataToByteSlice(data []byte) *ast.CompositeLit {
-	var full string
-
 	var builder strings.Builder
 
 	for _, b := range data {
-		str := strconv.FormatInt(int64(b), 10) + ","
-		builder.WriteString(str)
+		builder.WriteString(strconv.FormatInt(int64(b), 10) + ",")
 	}
-
-	full = strings.TrimSuffix(builder.String(), ",")
 
 	y := &ast.BasicLit{
 		Kind:  token.STRING,
-		Value: full,
+		Value: builder.String(),
 	}
 
 	return &ast.CompositeLit{
