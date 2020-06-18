@@ -21,21 +21,30 @@ var fset *token.FileSet
 
 func main() {
 	now := time.Now()
+	defer fmt.Println("binclude finished in:", time.Since(now))
+
+	exitCode := main1()
+
+	defer os.Exit(exitCode)
+}
+
+func main1() int {
 	log.SetPrefix("[binclude] ")
 	wd, err := os.Getwd()
 	if err != nil {
-		log.Fatalln("could not get wd:", err)
+		log.Fatalln("could not get working directory:", err)
 	}
 
-	err = main1(wd)
+	err = mainErr(wd)
 	if err != nil {
-		log.Fatalln("failed:", err)
+		log.Println("failed:", err)
+		return 1
 	}
 
-	fmt.Println("binclude finished in:", time.Since(now))
+	return 0
 }
 
-func main1(path string) error {
+func mainErr(path string) error {
 	paths, err := filepath.Glob(filepath.Join(path, "*.go"))
 	if err != nil {
 		return err

@@ -1,35 +1,25 @@
 package main
 
 import (
+	"fmt"
 	"go/ast"
 	"go/printer"
 	"go/token"
 	"os"
 	"strconv"
-	"strings"
 
 	"github.com/lu4p/binclude"
 )
 
-func dataToByteSlice(data []byte) *ast.CompositeLit {
-	var builder strings.Builder
-
-	for _, b := range data {
-		builder.WriteString(strconv.FormatInt(int64(b), 10) + ",")
-	}
-
-	y := &ast.BasicLit{
-		Kind:  token.STRING,
-		Value: builder.String(),
-	}
-
-	return &ast.CompositeLit{
-		Type: &ast.ArrayType{
-			Elt: &ast.Ident{
-				Name: "byte",
-			},
+func dataToByteSlice(data []byte) *ast.CallExpr {
+	return &ast.CallExpr{
+		Fun: &ast.ArrayType{
+			Elt: &ast.Ident{Name: "byte"},
 		},
-		Elts: []ast.Expr{y},
+		Args: []ast.Expr{&ast.BasicLit{
+			Kind:  token.STRING,
+			Value: fmt.Sprintf("%q", data),
+		}},
 	}
 }
 
@@ -134,6 +124,45 @@ func generateFile(pkgName *ast.Ident, fs binclude.FileSystem) error {
 		astFiles = append(astFiles, astFile)
 	}
 
+	astVars := append(astConsts, &ast.ValueSpec{
+		Names: []*ast.Ident{
+			{
+				Name: "binFS",
+			},
+		},
+		Values: []ast.Expr{
+			&ast.CompositeLit{
+				Type: &ast.SelectorExpr{
+					X: &ast.Ident{
+						Name: "binclude",
+					},
+					Sel: &ast.Ident{
+						Name: "FileSystem",
+					},
+				},
+				Elts: astFiles,
+			},
+		},
+	})
+
+	imports := []ast.Spec{
+		&ast.ImportSpec{
+			Path: &ast.BasicLit{
+				Kind:  token.STRING,
+				Value: "\"github.com/lu4p/binclude\"",
+			},
+		},
+	}
+
+	if len(astFiles) > 0 {
+		imports = append(imports, &ast.ImportSpec{
+			Path: &ast.BasicLit{
+				Kind:  token.STRING,
+				Value: "\"time\"",
+			},
+		})
+	}
+
 	bincludeFile := &ast.File{
 		Doc: &ast.CommentGroup{
 			List: []*ast.Comment{
@@ -147,50 +176,12 @@ func generateFile(pkgName *ast.Ident, fs binclude.FileSystem) error {
 		Name:    pkgName,
 		Decls: []ast.Decl{
 			&ast.GenDecl{
-				Tok: token.IMPORT,
-				Specs: []ast.Spec{
-					&ast.ImportSpec{
-						Path: &ast.BasicLit{
-							Kind:  token.STRING,
-							Value: "\"github.com/lu4p/binclude\"",
-						},
-					},
-					&ast.ImportSpec{
-						Path: &ast.BasicLit{
-							Kind:  token.STRING,
-							Value: "\"time\"",
-						},
-					},
-				},
+				Tok:   token.IMPORT,
+				Specs: imports,
 			},
 			&ast.GenDecl{
 				Tok:   token.VAR,
-				Specs: astConsts,
-			},
-			&ast.GenDecl{
-				Tok: token.VAR,
-				Specs: []ast.Spec{
-					&ast.ValueSpec{
-						Names: []*ast.Ident{
-							{
-								Name: "binFS",
-							},
-						},
-						Values: []ast.Expr{
-							&ast.CompositeLit{
-								Type: &ast.SelectorExpr{
-									X: &ast.Ident{
-										Name: "binclude",
-									},
-									Sel: &ast.Ident{
-										Name: "FileSystem",
-									},
-								},
-								Elts: astFiles,
-							},
-						},
-					},
-				},
+				Specs: astVars,
 			},
 		},
 	}

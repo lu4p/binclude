@@ -1,0 +1,13 @@
+! binclude
+
+-- assets/asset1.txt --
+asset1
+
+-- assets/asset2.txt --
+asset2
+
+-- subdir/subdirasset1.txt --
+subdirasset1
+
+-- subdir/subdirasset2.txt --
+subdirasset2

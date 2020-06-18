@@ -1,0 +1,14 @@
+! binclude
+
+-- go.mod --
+module test/main
+-- main.go --
+package main
+
+import (
+	"github.com/lu4p/binclude"
+)
+
+func main() {
+	binclude.Include("./assets")
+}
