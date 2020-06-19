@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -12,7 +11,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/lu4p/binclude"
 )
@@ -20,22 +18,13 @@ import (
 var fset *token.FileSet
 
 func main() {
-	now := time.Now()
-	defer fmt.Println("binclude finished in:", time.Since(now))
-
-	exitCode := main1()
-
-	defer os.Exit(exitCode)
+	os.Exit(main1())
 }
 
 func main1() int {
 	log.SetPrefix("[binclude] ")
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Fatalln("could not get working directory:", err)
-	}
 
-	err = mainErr(wd)
+	err := mainErr()
 	if err != nil {
 		log.Println("failed:", err)
 		return 1
@@ -44,11 +33,8 @@ func main1() int {
 	return 0
 }
 
-func mainErr(path string) error {
-	paths, err := filepath.Glob(filepath.Join(path, "*.go"))
-	if err != nil {
-		return err
-	}
+func mainErr() error {
+	paths, _ := filepath.Glob("*.go")
 
 	if len(paths) == 0 {
 		return errors.New("No .go files found in the current directory")
@@ -70,7 +56,7 @@ func mainErr(path string) error {
 
 	pkgName := files[0].Name
 
-	paths, err = detectIncluded(files)
+	paths, err := detectIncluded(files)
 	if err != nil {
 		return err
 	}
@@ -111,12 +97,7 @@ func buildFS(paths []string) (binclude.FileSystem, error) {
 	}
 
 	for _, path := range paths {
-		_, err := os.Stat(path)
-		if err != nil {
-			return nil, err
-		}
-
-		err = filepath.Walk(path, walkFn)
+		err := filepath.Walk(path, walkFn)
 		if err != nil {
 			return nil, err
 		}
@@ -127,8 +108,6 @@ func buildFS(paths []string) (binclude.FileSystem, error) {
 
 func detectIncluded(files []*ast.File) ([]string, error) {
 	var includedPaths []string
-
-	wd, _ := os.Getwd()
 
 	visit := func(node ast.Node) bool {
 		if node == nil {
@@ -174,9 +153,12 @@ func detectIncluded(files []*ast.File) ([]string, error) {
 
 	for i, path := range includedPaths {
 		var err error
-		path = filepath.Join(wd, path)
 
-		path, err = filepath.Rel(wd, path)
+		if filepath.IsAbs(path) {
+			return nil, errors.New("only supports relative include paths")
+		}
+
+		_, err = os.Stat(path)
 		if err != nil {
 			return nil, err
 		}

@@ -1,0 +1,33 @@
+chmod 000 assets
+! binclude
+chmod 755 assets
+chmod 000 assets/asset1.txt
+! binclude
+
+-- go.mod --
+module test/main
+-- main.go --
+package main
+
+import (
+	"github.com/lu4p/binclude"
+)
+
+func main() {
+	binclude.Include("./assets")
+
+	infos, err := binFS.ReadDir("./assets")
+	if err != nil {
+		panic(err)
+	}
+
+	for _, info := range infos {
+		println(info.Name())
+	}
+}
+
+-- assets/asset1.txt --
+asset1
+
+-- assets/asset2.txt --
+asset2

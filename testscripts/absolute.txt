@@ -1,0 +1,26 @@
+! binclude
+! go build
+
+-- go.mod --
+module test/main
+-- main.go --
+package main
+
+import (
+	"fmt"
+
+	"github.com/lu4p/binclude"
+)
+
+func main() {
+	binclude.Include("/absolute")
+
+	infos, err := binFS.ReadDir("/absolute")
+	if err != nil {
+		panic(err)
+	}
+
+	for _, info := range infos {
+		fmt.Println(info.Name())
+	}
+}
