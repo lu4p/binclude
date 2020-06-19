@@ -7,7 +7,7 @@
 
 binclude is a tool for including static files into Go binaries.
 - focuses on ease of use
-- the bincluded files add no more than the filesize to the binary (straight binary literals)
+- the bincluded files add no more than the filesize to the binary
 - uses ast for typesafe parsing and code generation
 - each package can have its own `binclude.FileSystem`
 - `binclude.FileSystem` implements the `http.FileSystem` interface
