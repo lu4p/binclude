@@ -19,7 +19,7 @@ func main() {
 	binclude.Include("./assets")
 	binclude.Include("file.txt")
 
-	f, err := binFS.Open("file.txt")
+	f, err := BinFS.Open("file.txt")
 	if err != nil {
 		panic(err)
 	}
@@ -31,7 +31,7 @@ func main() {
 
 	fmt.Println(string(out))
 
-	infos, err := binFS.ReadDir("./assets")
+	infos, err := BinFS.ReadDir("./assets")
 	if err != nil {
 		panic(err)
 	}
@@ -58,7 +58,7 @@ var (
 	_binclude3	= []byte("file.txt")
 	_binclude4	= []byte("asset1")
 )
-var binFS = binclude.FileSystem{"assets/asset2.txt": {Filename: "asset2.txt", Mode: 420, ModTime: time.Unix(1592103958, 0), Content: _binclude0}, "assets/subdir": {Filename: "subdir", Mode: 2147484141, ModTime: time.Unix(1592104033, 0), Content: nil}, "assets/subdir/subdirasset1.txt": {Filename: "subdirasset1.txt", Mode: 420, ModTime: time.Unix(1592104027, 0), Content: _binclude1}, "assets/subdir/subdirasset2.txt": {Filename: "subdirasset2.txt", Mode: 420, ModTime: time.Unix(1592104033, 0), Content: _binclude2}, "file.txt": {Filename: "file.txt", Mode: 420, ModTime: time.Unix(1592104011, 0), Content: _binclude3}, "assets": {Filename: "assets", Mode: 2147484141, ModTime: time.Unix(1592518785, 0), Content: nil}, "assets/asset1.txt": {Filename: "asset1.txt", Mode: 420, ModTime: time.Unix(1592103949, 0), Content: _binclude4}}
+var BinFS = binclude.FileSystem{"assets/asset2.txt": {Filename: "asset2.txt", Mode: 420, ModTime: time.Unix(1592103958, 0), Content: _binclude0}, "assets/subdir": {Filename: "subdir", Mode: 2147484141, ModTime: time.Unix(1592104033, 0), Content: nil}, "assets/subdir/subdirasset1.txt": {Filename: "subdirasset1.txt", Mode: 420, ModTime: time.Unix(1592104027, 0), Content: _binclude1}, "assets/subdir/subdirasset2.txt": {Filename: "subdirasset2.txt", Mode: 420, ModTime: time.Unix(1592104033, 0), Content: _binclude2}, "file.txt": {Filename: "file.txt", Mode: 420, ModTime: time.Unix(1592104011, 0), Content: _binclude3}, "assets": {Filename: "assets", Mode: 2147484141, ModTime: time.Unix(1592518785, 0), Content: nil}, "assets/asset1.txt": {Filename: "asset1.txt", Mode: 420, ModTime: time.Unix(1592103949, 0), Content: _binclude4}}
 
 -- assets/asset1.txt --
 asset1

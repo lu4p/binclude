@@ -3,24 +3,18 @@ package binclude_test
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"testing"
-	"time"
 
 	"github.com/lu4p/binclude"
+	"github.com/lu4p/binclude/example"
 )
 
-var (
-	_binclude0 = []byte{102, 105, 108, 101, 46, 116, 120, 116}
-	_binclude1 = []byte{97, 115, 115, 101, 116, 49}
-	_binclude2 = []byte{97, 115, 115, 101, 116, 49}
-	_binclude3 = []byte{115, 117, 98, 100, 105, 114, 97, 115, 115, 101, 116, 49}
-	_binclude4 = []byte{115, 117, 98, 100, 105, 114, 97, 115, 115, 101, 116, 49}
-)
-var binFS = binclude.FileSystem{"file.txt": {Filename: "file.txt", Mode: 420, ModTime: time.Unix(1592104011, 0), Content: _binclude0}, "assets": {Filename: "assets", Mode: 2147484141, ModTime: time.Unix(1592147369, 0), Content: nil}, "assets/asset1.txt": {Filename: "asset1.txt", Mode: 420, ModTime: time.Unix(1592103949, 0), Content: _binclude1}, "assets/asset2.txt": {Filename: "asset2.txt", Mode: 420, ModTime: time.Unix(1592103958, 0), Content: _binclude2}, "assets/subdir": {Filename: "subdir", Mode: 2147484141, ModTime: time.Unix(1592104033, 0), Content: nil}, "assets/subdir/subdirasset1.txt": {Filename: "subdirasset1.txt", Mode: 420, ModTime: time.Unix(1592104027, 0), Content: _binclude3}, "assets/subdir/subdirasset2.txt": {Filename: "subdirasset2.txt", Mode: 420, ModTime: time.Unix(1592104033, 0), Content: _binclude4}}
+var BinFS = example.BinFS
 
 func ExampleFileSystem_Open() {
 	binclude.Include("./assets")
-	f, _ := binFS.Open("./assets/asset1.txt")
+	f, _ := BinFS.Open("./assets/asset1.txt")
 	data, _ := ioutil.ReadAll(f)
 	fmt.Println(string(data))
 	// Output: asset1
@@ -28,14 +22,14 @@ func ExampleFileSystem_Open() {
 
 func ExampleFileSystem_ReadFile() {
 	binclude.Include("file.txt")
-	data, _ := binFS.ReadFile("file.txt")
+	data, _ := BinFS.ReadFile("file.txt")
 	fmt.Println(string(data))
 	// Output: file.txt
 }
 
 func ExampleFileSystem_ReadDir() {
 	binclude.Include("./assets")
-	infos, _ := binFS.ReadDir("./assets")
+	infos, _ := BinFS.ReadDir("./assets")
 	for _, info := range infos {
 		fmt.Println(info.Name())
 	}
@@ -44,15 +38,47 @@ func ExampleFileSystem_ReadDir() {
 	// subdir
 }
 
+func ExampleFileSystem_CopyFile() {
+	BinFS.CopyFile("./assets/asset1.txt", "asset1.txt")
+
+	c, _ := ioutil.ReadFile("asset1.txt")
+
+	fmt.Println(string(c))
+
+	// Output: asset1
+}
+
+func TestCopyFile(t *testing.T) {
+	err := BinFS.CopyFile("./assets/asset1.txt", "asset1.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove("asset1.txt")
+
+	c, err := ioutil.ReadFile("asset1.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(c) != "asset1" {
+		t.Fatal("content doesn't match", c)
+	}
+
+	err = BinFS.CopyFile("nonexistent.txt", "nonexistent.txt")
+	if err == nil {
+		t.Fatal("can copy nonexistent file")
+	}
+}
+
 func TestReadFile(t *testing.T) {
-	_, err := binFS.ReadFile("nonexistent.txt")
+	_, err := BinFS.ReadFile("nonexistent.txt")
 	if err == nil {
 		t.Fatal("shouldn't be able to read nonexistent file")
 	}
 }
 
 func TestOpen(t *testing.T) {
-	f, err := binFS.Open("file.txt")
+	f, err := BinFS.Open("file.txt")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -64,14 +90,14 @@ func TestOpen(t *testing.T) {
 
 	f.Close()
 
-	f, err = binFS.Open("nonexistent.txt")
+	f, err = BinFS.Open("nonexistent.txt")
 	if err == nil {
 		f.Close()
 		t.Fatal("nonexistent file can be opened")
 	}
 
 	binclude.Debug = true
-	f, err = binFS.Open("go.mod")
+	f, err = BinFS.Open("go.mod")
 	if err != nil {
 		t.Fatal("cannot use os filesystem")
 	}
@@ -81,32 +107,32 @@ func TestOpen(t *testing.T) {
 }
 
 func TestReadDir(t *testing.T) {
-	_, err := binFS.ReadDir("./assets/asset1.txt")
+	_, err := BinFS.ReadDir("./assets/asset1.txt")
 	if err != nil {
 		t.Fatal("cannot read directory of file")
 	}
 
-	_, err = binFS.ReadDir("./nonexistent")
+	_, err = BinFS.ReadDir("./nonexistent")
 	if err == nil {
 		t.Fatal("shouldn't be able to read nonexistent dir")
 	}
 }
 
 func TestStat(t *testing.T) {
-	_, err := binFS.Stat("./assets/asset1.txt")
+	_, err := BinFS.Stat("./assets/asset1.txt")
 	if err != nil {
 		t.Fatal("cannot stat file")
 	}
 
-	_, err = binFS.Stat("./nonexistent")
+	_, err = BinFS.Stat("./nonexistent")
 	if err == nil {
 		t.Fatal("shouldn't be able to stat nonexistent dir")
 	}
 }
 
 func TestFileInfo(t *testing.T) {
-	file := binFS["assets/asset1.txt"]
-	info, err := binFS.Stat("./assets/asset1.txt")
+	file := BinFS["assets/asset1.txt"]
+	info, err := BinFS.Stat("./assets/asset1.txt")
 	if err != nil {
 		t.Fatal("cannot stat file")
 	}

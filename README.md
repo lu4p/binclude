@@ -14,6 +14,7 @@ binclude is a tool for including static files into Go binaries.
 - `ioutil` like functions `FileSystem.ReadFile`, `FileSystem.ReadDir`
 - include all files/ directories under a given path by calling `binclude.Include("./path")`
 - high test coverage
+- supports execution of executables directly from a `binclude.FileSystem` (os/exec wrapper)
 
 
 ## Install
@@ -37,7 +38,7 @@ func main() {
 	binclude.Include("./assets")
 	binclude.Include("file.txt")
 
-	f, err := binFS.Open("file.txt")
+	f, err := BinFS.Open("file.txt")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -49,7 +50,7 @@ func main() {
 
 	log.Println(string(out))
 
-	infos, err := binFS.ReadDir("./assets")
+	infos, err := BinFS.ReadDir("./assets")
 	if err != nil {
 		log.Fatalln(err)
 	}

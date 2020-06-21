@@ -3,6 +3,7 @@ package binclude
 import (
 	"bytes"
 	"errors"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -80,6 +81,28 @@ func (fs FileSystem) ReadDir(dirname string) ([]os.FileInfo, error) {
 	f.Close()
 	sort.Slice(list, func(i, j int) bool { return list[i].Name() < list[j].Name() })
 	return list, nil
+}
+
+// CopyFile copies a specific file from a binclude FileSystem to the hosts FileSystem.
+// Permissions are copied from the included file.
+func (fs FileSystem) CopyFile(bincludePath, hostPath string) error {
+	src, err := fs.Open(bincludePath)
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	info, _ := src.Stat()
+
+	dst, err := os.OpenFile(hostPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, info.Mode().Perm())
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, src)
+
+	return err
 }
 
 // File implements the io.Reader, io.Seeker, io.Closer and http.File interfaces

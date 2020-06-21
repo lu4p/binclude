@@ -1,4 +1,4 @@
-package main
+package example
 
 //go:generate binclude
 
@@ -13,7 +13,7 @@ func main() {
 	binclude.Include("./assets")
 	binclude.Include("file.txt")
 
-	f, err := binFS.Open("file.txt")
+	f, err := BinFS.Open("file.txt")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -25,7 +25,7 @@ func main() {
 
 	log.Println(string(out))
 
-	infos, err := binFS.ReadDir("./assets")
+	infos, err := BinFS.ReadDir("./assets")
 	if err != nil {
 		log.Fatalln(err)
 	}

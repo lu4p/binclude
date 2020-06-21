@@ -127,7 +127,7 @@ func generateFile(pkgName *ast.Ident, fs binclude.FileSystem) error {
 	astVars := append(astConsts, &ast.ValueSpec{
 		Names: []*ast.Ident{
 			{
-				Name: "binFS",
+				Name: "BinFS",
 			},
 		},
 		Values: []ast.Expr{

@@ -13,7 +13,7 @@ import (
 func main() {
 	binclude.Include("./assets")
 
-	infos, err := binFS.ReadDir("./assets")
+	infos, err := BinFS.ReadDir("./assets")
 	if err != nil {
 		panic(err)
 	}
