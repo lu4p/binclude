@@ -1,5 +1,4 @@
-// Package binexec implements functionallity simmilar to os/exec
-// for a binclude.FileSystem
+// Package binexec implements a wrapper for os/exec
 package binexec
 
 import (
