@@ -24,7 +24,7 @@ func main() {
 	}
 
 	for _, info := range infos {
-		fmt.Println("osinfo:", info.Name())
+		fmt.Println(info.Name())
 	}
 
 	infos, err = BinFS.ReadDir("./assets")
