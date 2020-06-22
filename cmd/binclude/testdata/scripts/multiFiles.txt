@@ -1,7 +1,7 @@
 binclude
 go build
 exec ./main$exe
-cmp stdout main.stdout
+cmp stderr main.stderr
 
 -- go.mod --
 module test/main
@@ -9,15 +9,13 @@ module test/main
 package main
 
 import (
-	"fmt"
-
 	"github.com/lu4p/binclude"
 )
 
 func main() {
 	binclude.Include("./assets")
 
-    anotherfile()
+	anotherfile()
 
 	infos, err := BinFS.ReadDir("./assets")
 	if err != nil {
@@ -25,7 +23,7 @@ func main() {
 	}
 
 	for _, info := range infos {
-		fmt.Println(info.Name())
+		println(info.Name())
 	}
 }
 
@@ -34,13 +32,12 @@ package main
 
 import (
 	"io/ioutil"
-	"fmt"
 
 	"github.com/lu4p/binclude"
 )
 
 func anotherfile() {
-    binclude.Include("file.txt")
+	binclude.Include("file.txt")
 
 	f, err := BinFS.Open("file.txt")
 	if err != nil {
@@ -52,7 +49,7 @@ func anotherfile() {
 		panic(err)
 	}
 
-	fmt.Println(string(out))
+	println(string(out))
 }
 
 -- assets/asset1.txt --
@@ -70,7 +67,7 @@ subdirasset2
 -- file.txt --
 file
 
--- main.stdout --
+-- main.stderr --
 file
 
 
