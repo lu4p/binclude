@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -30,6 +31,8 @@ var _ http.FileSystem = new(FileSystem)
 // Open returns a File using the http.File interface
 func (fs FileSystem) Open(name string) (http.File, error) {
 	if Debug {
+		name = filepath.FromSlash(name)
+
 		return os.Open(name)
 	}
 
@@ -93,6 +96,8 @@ func (fs FileSystem) CopyFile(bincludePath, hostPath string) error {
 	defer src.Close()
 
 	info, _ := src.Stat()
+
+	log.Println("Copy Path:", hostPath, "binclude path:", bincludePath)
 
 	dst, err := os.OpenFile(hostPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, info.Mode().Perm())
 	if err != nil {
