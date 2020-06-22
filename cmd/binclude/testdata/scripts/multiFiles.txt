@@ -23,7 +23,7 @@ func main() {
 	}
 
 	for _, info := range infos {
-		println(info.Name())
+		println("Name:", info.Name())
 	}
 }
 
@@ -66,10 +66,7 @@ subdirasset2
 
 -- file.txt --
 file
-
 -- main.stderr --
 file
-
-
-asset1.txt
-asset2.txt
+Name: asset1.txt
+Name: asset2.txt
