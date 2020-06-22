@@ -22,7 +22,7 @@ func TestScripts(t *testing.T) {
 	t.Parallel()
 
 	p := testscript.Params{
-		Dir: filepath.Join("..", "..", "testscripts"),
+		Dir: filepath.Join("testdata", "scripts"),
 		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
 			"bincmp": bincmp,
 		},
