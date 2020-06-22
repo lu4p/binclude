@@ -23,6 +23,11 @@ jobs:
     - name: Get dependencies
       run: |
         go get -v -t -d ./...
+    
+    - name: Go binexec generate
+      run: |
+        cd ./binexec/example && \
+        go generate
 
     - name: Test
       run: bash test.sh
