@@ -10,6 +10,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 
 	"github.com/lu4p/binclude"
 )
@@ -49,5 +50,7 @@ subdirasset1
 subdirasset2
 
 -- main.stdout --
+asset1.txt
+asset2.txt
 asset1.txt
 asset2.txt
