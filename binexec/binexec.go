@@ -20,6 +20,7 @@ type Cmd struct {
 // but copies the executeable to run from bincludePath
 // to the host os.
 func Command(fs binclude.FileSystem, bincludePath string, arg ...string) (*Cmd, error) {
+	bincludePath = filepath.FromSlash(bincludePath)
 	execPath, err := copyCommand(fs, bincludePath)
 	if err != nil {
 		return nil, err
