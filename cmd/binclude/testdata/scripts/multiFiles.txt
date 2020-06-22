@@ -68,5 +68,6 @@ subdirasset2
 file
 -- main.stderr --
 file
+
 Name: asset1.txt
 Name: asset2.txt
