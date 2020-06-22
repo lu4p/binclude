@@ -25,9 +25,7 @@ jobs:
         go get -v -t -d ./...
     
     - name: Go binexec generate
-      run: |
-        cd ./binexec/example && \
-        go generate
+      run: go generate ./binexec/example/
 
     - name: Test
       run: bash test.sh
