@@ -4,7 +4,6 @@ import (
 	"context"
 	"io/ioutil"
 	"log"
-	"path/filepath"
 	"runtime"
 	"testing"
 
@@ -18,7 +17,7 @@ var testprg = "testprg/testprg"
 
 func init() {
 	if runtime.GOOS == "windows" {
-		testprg = filepath.FromSlash(testprg) + ".exe"
+		testprg += ".exe"
 	}
 
 	log.Println("Testprg:", testprg)
