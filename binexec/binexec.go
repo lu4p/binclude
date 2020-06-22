@@ -4,6 +4,7 @@ package binexec
 import (
 	"context"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,7 +21,6 @@ type Cmd struct {
 // but copies the executeable to run from bincludePath
 // to the host os.
 func Command(fs binclude.FileSystem, bincludePath string, arg ...string) (*Cmd, error) {
-	bincludePath = filepath.FromSlash(bincludePath)
 	execPath, err := copyCommand(fs, bincludePath)
 	if err != nil {
 		return nil, err
@@ -38,6 +38,8 @@ func copyCommand(fs binclude.FileSystem, bincludePath string) (string, error) {
 	dir, _ := os.UserCacheDir()
 
 	execPath := filepath.Join(dir, filepath.Base(bincludePath))
+
+	log.Println("copy:", bincludePath, execPath)
 	return execPath, fs.CopyFile(bincludePath, execPath)
 }
 
