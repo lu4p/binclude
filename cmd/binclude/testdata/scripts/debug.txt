@@ -17,6 +17,15 @@ import (
 func main() {
 	binclude.Debug = true
 
+	infos, err := ioutil.ReadDir("assets")
+	if err != nil {
+		panic(err)
+	}
+
+	for _, info := range infos {
+		fmt.Println("osinfo:", info.Name())
+	}
+
 	infos, err := BinFS.ReadDir("./assets")
 	if err != nil {
 		panic(err)
