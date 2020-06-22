@@ -27,7 +27,7 @@ func main() {
 		fmt.Println("osinfo:", info.Name())
 	}
 
-	infos, err := BinFS.ReadDir("./assets")
+	infos, err = BinFS.ReadDir("./assets")
 	if err != nil {
 		panic(err)
 	}
