@@ -106,10 +106,19 @@ func (fs FileSystem) CopyFile(bincludePath, hostPath string) error {
 	defer dst.Close()
 
 	_, err = io.Copy(dst, src)
+	if err != nil {
+		return err
+	}
 
+	info, err = os.Stat(hostPath)
+	if err != nil {
 	return err
 }
 
+	log.Println("Info after Copy:", info.IsDir(), info.Name(), info.Mode(), info.Size())
+
+	return nil
+}
 // File implements the io.Reader, io.Seeker, io.Closer and http.File interfaces
 type File struct {
 	Filename string
