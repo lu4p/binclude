@@ -162,6 +162,9 @@ func (f *File) Size() int64 {
 // by Lstat, in directory order. Subsequent calls on the same file will yield
 // further FileInfos.
 func (f *File) Readdir(count int) (infos []os.FileInfo, err error) {
+	for path, file := range *f.fs {
+		log.Println(path, file.Filename)
+	}
 	fileDir := f.Name()
 	if !f.Mode.IsDir() {
 		fileDir = filepath.Dir(f.path)
