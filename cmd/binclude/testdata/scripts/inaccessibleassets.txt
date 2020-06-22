@@ -1,8 +1,8 @@
-chmod 000 assets
-! binclude
-chmod 755 assets
-chmod 000 assets/asset1.txt
-! binclude
+[!windows] chmod 000 assets
+[!windows] ! binclude
+[!windows] chmod 755 assets
+[!windows] chmod 000 assets/asset1.txt
+[!windows] ! binclude
 
 -- go.mod --
 module test/main
