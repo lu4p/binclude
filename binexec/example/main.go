@@ -1,7 +1,7 @@
 package example
 
 //go:generate go build -o ./testprg/testprg ./testprg
-//go:generate binclude
+//go:generate go run ../../cmd/binclude/
 import (
 	"github.com/lu4p/binclude"
 )
