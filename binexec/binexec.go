@@ -59,6 +59,7 @@ func CommandContext(ctx context.Context, fs binclude.FileSystem, bincludePath st
 // Run is similar to (*Cmd).Run() in the os/exec package,
 // but deletes the executable at Cmd.Path
 func (c *Cmd) Run() error {
+	defer os.Remove(c.OsCmd.Path)
 	return c.OsCmd.Run()
 }
 
