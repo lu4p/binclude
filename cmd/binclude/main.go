@@ -86,6 +86,8 @@ func buildFS(paths []string) (binclude.FileSystem, error) {
 			}
 		}
 
+		path = filepath.ToSlash(path)
+
 		fs[path] = &binclude.File{
 			Filename: info.Name(),
 			Mode:     info.Mode(),
