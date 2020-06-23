@@ -3,7 +3,6 @@ package binexec_test
 import (
 	"context"
 	"io/ioutil"
-	"log"
 	"runtime"
 	"testing"
 
@@ -19,8 +18,6 @@ func init() {
 	if runtime.GOOS == "windows" {
 		testprg += ".exe"
 	}
-
-	log.Println("Testprg:", testprg)
 }
 
 func TestRun(t *testing.T) {

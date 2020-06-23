@@ -1,6 +1,6 @@
 package example
 
-//go:generate binclude
+//go:generate go run ../cmd/binclude
 
 import (
 	"io/ioutil"

@@ -4,7 +4,6 @@ package binexec
 import (
 	"context"
 	"io"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -39,7 +38,6 @@ func copyCommand(fs binclude.FileSystem, bincludePath string) (string, error) {
 
 	execPath := filepath.Join(dir, filepath.Base(bincludePath))
 
-	log.Println("copy:", bincludePath, execPath)
 	return execPath, fs.CopyFile(bincludePath, execPath)
 }
 

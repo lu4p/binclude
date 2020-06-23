@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -97,8 +96,6 @@ func (fs FileSystem) CopyFile(bincludePath, hostPath string) error {
 
 	info, _ := src.Stat()
 
-	log.Println("Copy Path:", hostPath, "binclude path:", bincludePath)
-
 	dst, err := os.OpenFile(hostPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, info.Mode().Perm())
 	if err != nil {
 		return err
@@ -114,8 +111,6 @@ func (fs FileSystem) CopyFile(bincludePath, hostPath string) error {
 	if err != nil {
 	return err
 }
-
-	log.Println("Info after Copy:", info.IsDir(), info.Name(), info.Mode(), info.Size())
 
 	return nil
 }
@@ -162,9 +157,6 @@ func (f *File) Size() int64 {
 // by Lstat, in directory order. Subsequent calls on the same file will yield
 // further FileInfos.
 func (f *File) Readdir(count int) (infos []os.FileInfo, err error) {
-	for path, file := range *f.fs {
-		log.Println(path, file.Filename)
-	}
 	fileDir := f.Name()
 	if !f.Mode.IsDir() {
 		fileDir = filepath.Dir(f.path)

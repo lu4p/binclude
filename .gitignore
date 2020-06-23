@@ -3,3 +3,5 @@
 /internal/inject
 /binexec/example/testprg/testprg
 /asset1.txt
+binexec/example/testprg/testprg.exe
+test/test.go
