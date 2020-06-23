@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -145,7 +146,7 @@ func (fs FileSystem) Decompress() (err error) {
 		if file.Compression == Gzip {
 			compReader, err = gzip.NewReader(f)
 			if err != nil {
-				return err
+				return fmt.Errorf("Gzip err: %v", err)
 			}
 		}
 
@@ -155,7 +156,7 @@ func (fs FileSystem) Decompress() (err error) {
 
 		content, err := ioutil.ReadAll(compReader)
 		if err != nil {
-			return err
+			return fmt.Errorf("Reader err: %v", err)
 		}
 		f.Close()
 
@@ -173,7 +174,7 @@ func (fs FileSystem) Compress(algo Compression) error {
 		return nil
 	}
 	for _, file := range fs {
-		if !shouldCompress(file.Content) {
+		if file.Mode.IsDir() || !shouldCompress(file.Content) {
 			continue
 		}
 		var b bytes.Buffer
