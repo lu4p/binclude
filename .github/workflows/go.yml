@@ -20,5 +20,3 @@ jobs:
 
     - name: Test
       run: bash test.sh
-    - name: CodeCov
-      run: bash codecov.sh
