@@ -15,6 +15,7 @@ binclude is a tool for including static files into Go binaries.
 - include all files/ directories under a given path by calling `binclude.Include("./path")`
 - high test coverage
 - supports execution of executables directly from a `binclude.FileSystem` (os/exec wrapper)
+- optional compression of files with gzip `binclude -gzip` or brotli `binclude  -brotli` 
 
 
 ## Install
@@ -66,7 +67,11 @@ To build use:
 go generate
 go build
 ```
-## Compression
-Binclude does not do any compression on its own.
+## Binary size
+The resulting binary can get quite large, with the included files. You can add compression of the included files with `-gzip` or `-brotli`. 
 
-This is intentional for simplicity, you can however reduce the final binary size by building without debug info (`go build -ldflags "-s -w"`) and compressing the the resulting binary with [upx](https://upx.github.io/) (`upx binname`).
+**Note:** decompression is optional to allow for the scenario where you want to serve compressed files for a webapp directly.
+
+You can reduce the final binary size by building without debug info (`go build -ldflags "-s -w"`) and compressing the resulting binary with [upx](https://upx.github.io/) (`upx binname`).
+
+**Note:** If you don't need to access the compressed form of the files I would advise to just use [upx](https://upx.github.io/) and don't add seperate compression to the files. 
