@@ -1,0 +1,69 @@
+binclude -brotli
+go build
+exec ./main$exe
+cmp stdout main.stdout
+
+-- go.mod --
+module test/main
+-- main.go --
+package main
+
+import (
+	"io/ioutil"
+	"fmt"
+
+	"github.com/lu4p/binclude"
+)
+
+func main() {
+	binclude.Include("./assets")
+	binclude.Include("file.txt")
+
+    err := BinFS.Decompress()
+    if err != nil{
+        panic(err)
+    }
+
+	f, err := BinFS.Open("file.txt")
+	if err != nil {
+		panic(err)
+	}
+
+	out, err := ioutil.ReadAll(f)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(string(out))
+
+	infos, err := BinFS.ReadDir("./assets")
+	if err != nil {
+		panic(err)
+	}
+
+	for _, info := range infos {
+		fmt.Println(info.Name())
+	}
+}
+
+-- assets/asset1.txt --
+asset1
+
+-- assets/asset2.txt --
+asset2
+
+-- subdir/subdirasset1.txt --
+subdirasset1
+
+-- subdir/subdirasset2.txt --
+subdirasset2
+
+-- file.txt --
+file
+
+-- main.stdout --
+file
+
+
+asset1.txt
+asset2.txt
