@@ -30,6 +30,8 @@ var _ http.FileSystem = new(FileSystem)
 // Open returns a File using the http.File interface
 func (fs FileSystem) Open(name string) (http.File, error) {
 	if Debug {
+		name = filepath.FromSlash(name)
+
 		return os.Open(name)
 	}
 
@@ -101,10 +103,17 @@ func (fs FileSystem) CopyFile(bincludePath, hostPath string) error {
 	defer dst.Close()
 
 	_, err = io.Copy(dst, src)
+	if err != nil {
+		return err
+	}
 
+	info, err = os.Stat(hostPath)
+	if err != nil {
 	return err
 }
 
+	return nil
+}
 // File implements the io.Reader, io.Seeker, io.Closer and http.File interfaces
 type File struct {
 	Filename string

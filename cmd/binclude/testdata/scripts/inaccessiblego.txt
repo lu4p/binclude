@@ -1,5 +1,5 @@
-chmod 000 main.go
-! binclude
+[!windows] chmod 000 main.go
+[!windows] ! binclude
 
 -- go.mod --
 module test/main

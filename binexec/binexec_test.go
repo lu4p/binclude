@@ -3,6 +3,7 @@ package binexec_test
 import (
 	"context"
 	"io/ioutil"
+	"runtime"
 	"testing"
 
 	"github.com/lu4p/binclude/binexec"
@@ -11,8 +12,16 @@ import (
 
 var BinFS = example.BinFS
 
+var testprg = "testprg/testprg"
+
+func init() {
+	if runtime.GOOS == "windows" {
+		testprg += ".exe"
+	}
+}
+
 func TestRun(t *testing.T) {
-	cmd, err := binexec.Command(BinFS, "testprg/testprg")
+	cmd, err := binexec.Command(BinFS, testprg)
 	if err != nil {
 		t.Fatal("cannot initialize cmd", err)
 	}
@@ -37,7 +46,7 @@ func TestNonexistent(t *testing.T) {
 }
 
 func TestStart(t *testing.T) {
-	cmd, err := binexec.Command(BinFS, "testprg/testprg")
+	cmd, err := binexec.Command(BinFS, testprg)
 	if err != nil {
 		t.Fatal("cannot initialize cmd", err)
 	}
@@ -83,7 +92,7 @@ func TestStart(t *testing.T) {
 }
 
 func TestRunContext(t *testing.T) {
-	cmd, err := binexec.CommandContext(context.Background(), BinFS, "testprg/testprg")
+	cmd, err := binexec.CommandContext(context.Background(), BinFS, testprg)
 	if err != nil {
 		t.Fatal("cannot initialize cmd", err)
 	}

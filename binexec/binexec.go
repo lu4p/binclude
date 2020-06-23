@@ -37,6 +37,7 @@ func copyCommand(fs binclude.FileSystem, bincludePath string) (string, error) {
 	dir, _ := os.UserCacheDir()
 
 	execPath := filepath.Join(dir, filepath.Base(bincludePath))
+
 	return execPath, fs.CopyFile(bincludePath, execPath)
 }
 

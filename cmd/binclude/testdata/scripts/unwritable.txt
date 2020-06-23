@@ -1,6 +1,6 @@
-chmod 544 .  
+[!windows] chmod 544 .  
 
-! binclude
+[!windows] ! binclude
 
 -- go.mod --
 module test/main
