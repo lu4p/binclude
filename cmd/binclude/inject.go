@@ -30,18 +30,21 @@ func fileToAst(path string, file *binclude.File, num int) (c *ast.ValueSpec, m *
 	if !file.Mode.IsDir() {
 		c = &ast.ValueSpec{
 			Names: []*ast.Ident{
-				{
-					Name: constName,
-				},
+				{Name: constName},
 			},
 			Values: []ast.Expr{
 				dataToByteSlice(file.Content),
 			},
 		}
 
-		x = &ast.Ident{
-			Name: constName,
-		}
+		x = &ast.Ident{Name: constName}
+	}
+
+	compressionName := "None"
+	if file.Compression == binclude.Gzip {
+		compressionName = "Gzip"
+	} else if file.Compression == binclude.Brotli {
+		compressionName = "Brotli"
 	}
 
 	m = &ast.KeyValueExpr{
@@ -52,9 +55,7 @@ func fileToAst(path string, file *binclude.File, num int) (c *ast.ValueSpec, m *
 		Value: &ast.CompositeLit{
 			Elts: []ast.Expr{
 				&ast.KeyValueExpr{
-					Key: &ast.Ident{
-						Name: "Filename",
-					},
+					Key: &ast.Ident{Name: "Filename"},
 					Value: &ast.BasicLit{
 						Kind:  token.STRING,
 						Value: `"` + file.Filename + `"`,
@@ -70,17 +71,11 @@ func fileToAst(path string, file *binclude.File, num int) (c *ast.ValueSpec, m *
 					},
 				},
 				&ast.KeyValueExpr{
-					Key: &ast.Ident{
-						Name: "ModTime",
-					},
+					Key: &ast.Ident{Name: "ModTime"},
 					Value: &ast.CallExpr{
 						Fun: &ast.SelectorExpr{
-							X: &ast.Ident{
-								Name: "time",
-							},
-							Sel: &ast.Ident{
-								Name: "Unix",
-							},
+							X:   &ast.Ident{Name: "time"},
+							Sel: &ast.Ident{Name: "Unix"},
 						},
 						Args: []ast.Expr{
 							&ast.BasicLit{
@@ -95,9 +90,14 @@ func fileToAst(path string, file *binclude.File, num int) (c *ast.ValueSpec, m *
 					},
 				},
 				&ast.KeyValueExpr{
-					Key: &ast.Ident{
-						Name: "Content",
+					Key: &ast.Ident{Name: "Compression"},
+					Value: &ast.SelectorExpr{
+						X:   &ast.Ident{Name: "binclude"},
+						Sel: &ast.Ident{Name: compressionName},
 					},
+				},
+				&ast.KeyValueExpr{
+					Key:   &ast.Ident{Name: "Content"},
 					Value: x,
 				},
 			},
@@ -126,19 +126,13 @@ func generateFile(pkgName *ast.Ident, fs binclude.FileSystem) error {
 
 	astVars := append(astConsts, &ast.ValueSpec{
 		Names: []*ast.Ident{
-			{
-				Name: "BinFS",
-			},
+			{Name: "BinFS"},
 		},
 		Values: []ast.Expr{
 			&ast.CompositeLit{
 				Type: &ast.SelectorExpr{
-					X: &ast.Ident{
-						Name: "binclude",
-					},
-					Sel: &ast.Ident{
-						Name: "FileSystem",
-					},
+					X:   &ast.Ident{Name: "binclude"},
+					Sel: &ast.Ident{Name: "FileSystem"},
 				},
 				Elts: astFiles,
 			},

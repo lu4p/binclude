@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -16,12 +17,31 @@ import (
 )
 
 var fset *token.FileSet
+var compress = binclude.None
+
+var brotli bool
+var gzip bool
+
+func init() {
+	const (
+		defaultGopher = "pocket"
+		usage         = "the variety of gopher"
+	)
+	flag.BoolVar(&gzip, "gzip", false, "compress files with gzip")
+	flag.BoolVar(&brotli, "brotli", false, "compress files with brotli")
+}
 
 func main() {
 	os.Exit(main1())
 }
 
 func main1() int {
+	flag.Parse()
+	if brotli {
+		compress = binclude.Brotli
+	} else if gzip {
+		compress = binclude.Gzip
+	}
 	log.SetPrefix("[binclude] ")
 
 	err := mainErr()
@@ -63,6 +83,10 @@ func mainErr() error {
 
 	fs, err := buildFS(paths)
 	if err != nil {
+		return err
+	}
+
+	if err := fs.Compress(compress); err != nil {
 		return err
 	}
 

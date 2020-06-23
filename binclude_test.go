@@ -70,6 +70,92 @@ func TestCopyFile(t *testing.T) {
 	}
 }
 
+func TestCompression(t *testing.T) {
+	testPath := "assets/asset1.txt"
+	startContent, err := BinFS.ReadFile(testPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = BinFS.Compress(binclude.None)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	nocompressContent, err := BinFS.ReadFile(testPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(startContent) != string(nocompressContent) {
+		t.Fatal("Compression with binclude.None should be a noop")
+	}
+
+	err = BinFS.Compress(binclude.Gzip)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if BinFS["assets/logo_nocompress.png"].Compression != binclude.None {
+		t.Fatal("Unexpected compressed png")
+	}
+
+	gzipContent, err := BinFS.ReadFile(testPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(startContent) == string(gzipContent) {
+		t.Fatal("Gzip didn't compress")
+	}
+
+	err = BinFS.Decompress()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	decGzipContent, err := BinFS.ReadFile(testPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(startContent) != string(decGzipContent) {
+		t.Fatal("File differs after compression and decompression.")
+	}
+
+	err = BinFS.Compress(binclude.Brotli)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if BinFS["assets/logo_nocompress.png"].Compression != binclude.None {
+		t.Fatal("Unexpected compressed png")
+	}
+
+	brotliContent, err := BinFS.ReadFile(testPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(startContent) == string(brotliContent) {
+		t.Fatal("Brotli didn't compress")
+	}
+
+	err = BinFS.Decompress()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	decBrotliContent, err := BinFS.ReadFile(testPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(startContent) != string(decBrotliContent) {
+		t.Fatal("File differs after compression and decompression.")
+	}
+}
+
 func TestReadFile(t *testing.T) {
 	_, err := BinFS.ReadFile("nonexistent.txt")
 	if err == nil {

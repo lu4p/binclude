@@ -2,6 +2,7 @@ package binclude
 
 import (
 	"bytes"
+	"compress/gzip"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -11,6 +12,9 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/andybalholm/brotli"
+	"github.com/gabriel-vasile/mimetype"
 )
 
 // Debug if set to true files are read via os.Open() and the bincluded files are
@@ -109,20 +113,120 @@ func (fs FileSystem) CopyFile(bincludePath, hostPath string) error {
 
 	info, err = os.Stat(hostPath)
 	if err != nil {
-	return err
-}
+		return err
+	}
 
 	return nil
 }
+
+// Compression the compression algorithm to use
+type Compression int
+
+const (
+	// None dont compress
+	None Compression = iota
+	// Gzip use gzip compression
+	Gzip
+	// Brotli use gzip compression
+	Brotli
+)
+
+// Decompress turns a FileSystem with compressed files into a filesystem without compressed files
+func (fs FileSystem) Decompress() (err error) {
+	for path, file := range fs {
+		if file.Compression == None {
+			continue
+		}
+
+		f, _ := fs.Open(path) // open cannot error when using a path we got from the fs
+		defer f.Close()
+
+		var compReader io.Reader
+		if file.Compression == Gzip {
+			compReader, err = gzip.NewReader(f)
+			if err != nil {
+				return err
+			}
+		}
+
+		if file.Compression == Brotli {
+			compReader = brotli.NewReader(f)
+		}
+
+		content, err := ioutil.ReadAll(compReader)
+		if err != nil {
+			return err
+		}
+		f.Close()
+
+		fs[path].Content = content
+
+	}
+
+	return nil
+
+}
+
+// Compress turns a FileSystem without compressed files into a filesystem with compressed files
+func (fs FileSystem) Compress(algo Compression) error {
+	if algo == None {
+		return nil
+	}
+	for _, file := range fs {
+		if !shouldCompress(file.Content) {
+			continue
+		}
+		var b bytes.Buffer
+
+		var writer io.WriteCloser
+		if algo == Gzip {
+			writer = gzip.NewWriter(&b)
+		}
+
+		if algo == Brotli {
+			writer = brotli.NewWriter(&b)
+		}
+
+		_, err := writer.Write(file.Content)
+		writer.Close()
+		if err != nil {
+			return err
+		}
+
+		file.Compression = algo
+		file.Content = b.Bytes()
+	}
+
+	return nil
+}
+
+// compressExcl exclude certain files from compression which don't compress well
+// inspired by https://github.com/gin-contrib/gzip/blob/master/options.go
+var compressExcl = []string{"application/x-7z-compressed", "application/zip", "application/x-bzip2", "application/gzip", "image/png", "image/jpg", "image/gif"}
+
+// shouldCompress says whether a file should be compressed based on its mimetype
+func shouldCompress(content []byte) bool {
+	mimeStr := mimetype.Detect(content).String()
+
+	for _, excl := range compressExcl {
+		if mimeStr == excl {
+			return false
+		}
+	}
+
+	return true
+}
+
 // File implements the io.Reader, io.Seeker, io.Closer and http.File interfaces
 type File struct {
 	Filename string
 	Mode     os.FileMode
 	ModTime  time.Time
 	Content  []byte
-	reader   *bytes.Reader
-	path     string
-	fs       *FileSystem
+	Compression
+	reader io.ReadSeeker
+	path   string
+	fs     *FileSystem
 }
 
 // check that the http.File interface is implemented
