@@ -36,6 +36,7 @@ func ExampleFileSystem_ReadDir() {
 	// Output: asset1.txt
 	// asset2.txt
 	// subdir
+	// example/assets/logo_nocompress.png
 }
 
 func ExampleFileSystem_CopyFile() {

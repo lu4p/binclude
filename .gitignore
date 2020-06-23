@@ -6,3 +6,4 @@
 binexec/example/testprg/testprg.exe
 test/test.go
 profile.out
+/test
