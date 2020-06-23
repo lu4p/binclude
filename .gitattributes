@@ -1,4 +1,4 @@
 # To prevent CRLF breakages on Windows for fragile files, like testdata.
 * -text
 
-codecov.sh -linguist-vendored
+codecov.sh linguist-vendored
