@@ -21,4 +21,4 @@ jobs:
     - name: Test
       run: bash test.sh
     - name: CodeCov
-      run: bash <(curl -s https://codecov.io/bash)
+      run: bash codecov.sh
