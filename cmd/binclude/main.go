@@ -23,10 +23,6 @@ var brotli bool
 var gzip bool
 
 func init() {
-	const (
-		defaultGopher = "pocket"
-		usage         = "the variety of gopher"
-	)
 	flag.BoolVar(&gzip, "gzip", false, "compress files with gzip")
 	flag.BoolVar(&brotli, "brotli", false, "compress files with brotli")
 }
