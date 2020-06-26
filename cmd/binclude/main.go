@@ -150,7 +150,7 @@ func detectIncluded(files []*ast.File) ([]string, error) {
 			return true
 		}
 
-		if sel.Sel.Name != "Include" || v.Name != "binclude" {
+		if !(sel.Sel.Name == "Include" || sel.Sel.Name == "IncludeFromFile") || v.Name != "binclude" {
 			return true
 		}
 
@@ -162,6 +162,25 @@ func detectIncluded(files []*ast.File) ([]string, error) {
 		value, err := strconv.Unquote(lit.Value)
 		if err != nil {
 			log.Fatalln("cannot unquote string:", err)
+		}
+
+		if sel.Sel.Name == "IncludeFromFile" {
+			content, err := ioutil.ReadFile(value)
+			if err != nil {
+				log.Fatalln("cannot read includefile:", value, "err:", err)
+			}
+
+			paths := strings.Split(string(content), "\n")
+			for i := 0; i < len(paths); i++ {
+				paths[i] = strings.TrimSpace(paths[i])
+				if paths[i] == "" {
+					paths = remove(paths, i)
+					i-- // reset positon by one because an element was removed
+				}
+			}
+
+			includedPaths = append(includedPaths, paths...)
+			return true
 		}
 
 		includedPaths = append(includedPaths, value)
@@ -189,4 +208,8 @@ func detectIncluded(files []*ast.File) ([]string, error) {
 	}
 
 	return includedPaths, nil
+}
+
+func remove(slice []string, s int) []string {
+	return append(slice[:s], slice[s+1:]...)
 }

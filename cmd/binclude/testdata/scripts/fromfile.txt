@@ -1,0 +1,66 @@
+binclude
+go build
+exec ./main$exe
+cmp stderr main.stderr
+
+-- go.mod --
+module test/main
+-- main.go --
+package main
+
+import (
+	"io/ioutil"
+
+	"github.com/lu4p/binclude"
+)
+
+func main() {
+	binclude.IncludeFromFile("includefile.txt")
+
+	f, err := BinFS.Open("file.txt")
+	if err != nil {
+		panic(err)
+	}
+
+	out, err := ioutil.ReadAll(f)
+	if err != nil {
+		panic(err)
+	}
+
+	println(string(out))
+
+	infos, err := BinFS.ReadDir("./assets")
+	if err != nil {
+		panic(err)
+	}
+
+	for _, info := range infos {
+		println(info.Name())
+	}
+}
+
+-- includefile.txt --
+./assets
+file.txt
+
+-- assets/asset1.txt --
+asset1
+
+-- assets/asset2.txt --
+asset2
+
+-- subdir/subdirasset1.txt --
+subdirasset1
+
+-- subdir/subdirasset2.txt --
+subdirasset2
+
+-- file.txt --
+file
+
+-- main.stderr --
+file
+
+
+asset1.txt
+asset2.txt
