@@ -108,3 +108,5 @@ darwin
 
 -- main.windows.stdout --
 windows
+
+-- main.stdout --
