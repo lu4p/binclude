@@ -10,17 +10,22 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
 	"github.com/lu4p/binclude"
 )
 
-var fset *token.FileSet
-var compress = binclude.None
+var (
+	operatingSystems = []string{"linux", "windows", "darwin", "freebsd", "js", "plan9", "freebsd", "dragonfly", "openbsd", "solaris", "aix", "android"}
+	archs            = []string{"ppc64", "386", "amd64", "wasm", "arm", "ppc64le", "mips", "mips64", "mips64le", "mipsle", "s390x", "arm64"}
 
-var brotli bool
-var gzip bool
+	fset     *token.FileSet
+	compress = binclude.None
+	brotli   bool
+	gzip     bool
+)
 
 func init() {
 	flag.BoolVar(&gzip, "gzip", false, "compress files with gzip")
@@ -63,6 +68,36 @@ func mainErr() error {
 		if strings.HasSuffix(path, "binclude.go") {
 			continue
 		}
+
+		temppath := strings.TrimSuffix(path, ".go")
+
+		skip := false
+		for _, arch := range archs {
+			if runtime.GOARCH == arch {
+				continue
+			}
+
+			if strings.HasSuffix(temppath, arch) {
+				skip = true
+			}
+		}
+
+		temppath = strings.TrimSuffix(temppath, "_"+runtime.GOARCH)
+
+		for _, sys := range operatingSystems {
+			if runtime.GOOS == sys {
+				continue
+			}
+
+			if strings.HasSuffix(temppath, sys) {
+				skip = true
+			}
+		}
+
+		if skip {
+			continue
+		}
+
 		file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
 		if err != nil {
 			return err

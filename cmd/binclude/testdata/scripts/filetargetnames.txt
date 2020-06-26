@@ -1,0 +1,110 @@
+binclude
+go run .
+[linux] cmp stdout main.linux.stdout
+[windows] cmp stdout main.windows.stdout
+[darwin] cmp stdout main.darwin.stdout
+
+-- go.mod --
+module test/main
+-- main.go --
+package main
+
+func main() {
+	printosfile()
+}
+
+-- second_darwin.go --
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/lu4p/binclude"
+)
+
+func printosfile() {
+	binclude.Include("darwin.txt")
+	content, err := BinFS.ReadFile("darwin.txt")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	fmt.Println(string(content))
+}
+
+-- second_linux.go --
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/lu4p/binclude"
+)
+
+func printosfile() {
+	binclude.Include("linux.txt")
+	content, err := BinFS.ReadFile("linux.txt")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	fmt.Println(string(content))
+}
+
+-- second_windows.go --
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/lu4p/binclude"
+)
+
+func printosfile() {
+	binclude.Include("windows.txt")
+	content, err := BinFS.ReadFile("windows.txt")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	fmt.Println(string(content))
+}
+
+-- second_ppc64.go --
+package main
+
+import (
+	"fmt"
+	"log"
+
+	"github.com/lu4p/binclude"
+)
+
+func printosfile() {
+	binclude.Include("neverinclude.txt")
+	content, err := BinFS.ReadFile("neverinclude.txt")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	fmt.Println(string(content))
+}
+
+
+-- linux.txt --
+linux
+-- darwin.txt --
+darwin
+-- windows.txt --
+windows
+-- main.linux.stdout --
+linux
+
+-- main.darwin.stdout --
+darwin
+
+-- main.windows.stdout --
+windows
