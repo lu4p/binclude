@@ -26,6 +26,10 @@ var Debug = false
 // The path is walked via filepath.Walk and all files found are included
 func Include(name string) {}
 
+// IncludeFromFile like include but reads paths from a textfile.
+// Paths are seperated by a newline (noop)
+func IncludeFromFile(name string) {}
+
 // FileSystem implements access to a collection of named files.
 type FileSystem map[string]*File
 
