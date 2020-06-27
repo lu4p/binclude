@@ -84,7 +84,7 @@ func fileToAst(path string, file *binclude.File, num int) (c *ast.ValueSpec, m *
 							},
 							&ast.BasicLit{
 								Kind:  token.INT,
-								Value: "0",
+								Value: strconv.Itoa(int(file.ModTime.Nanosecond())),
 							},
 						},
 					},
