@@ -96,3 +96,48 @@ func bar() {
   binclude.Include("./windows-file.dll")
 }
 ```
+
+## Advanced Usage
+The generator can also be included into your package to allow for the code generator to run after all module dependencies are installed.
+Without installing the binclude generator to the PATH seperatly.
+
+main.go:
+```go
+// +build !gen
+
+//go:generate go build -tags=gen -o generator
+//go:generate ./generator
+package main
+
+import (
+	"github.com/lu4p/binclude"
+)
+
+func main() {
+	binclude.Include("./assets")
+}
+
+```
+
+main_gen.go:
+```
+// +build gen
+
+package main
+
+import (
+	"github.com/lu4p/binclude"
+	"github.com/lu4p/binclude/bincludegen"
+)
+
+func main() {
+	bincludegen.Generate(binclude.None)
+	// binclude.None means no compression there are also binclude.Gzip and binclude.Brotli
+}
+```
+
+To build use:
+```
+go generate
+go build
+```
