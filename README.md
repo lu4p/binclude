@@ -74,6 +74,7 @@ You can reduce the final binary size by building without debug info (`go build -
 **Note:** If you don't need to access the compressed form of the files I would advise to just use [upx](https://upx.github.io/) and don't add seperate compression to the files. 
 
 You can add compression to the included files with `-gzip`
+
 **Note:** decompression is optional to allow for the scenario where you want to serve compressed files for a webapp directly.
 
 
