@@ -88,8 +88,6 @@ If they do not match the current GOOS / GOARCH.
 
 For example, if you want to include a binary only on Windows you could have a file `static_windows.go` and reference the static file:
 ```go
-//+build windows
-
 package main
 
 import "github.com/lu4p/binclude"
