@@ -67,13 +67,15 @@ go generate
 go build
 ```
 ## Binary size
-The resulting binary can get quite large, with the included files. You can add compression of the included files with `-gzip`
-
-**Note:** decompression is optional to allow for the scenario where you want to serve compressed files for a webapp directly.
+The resulting binary can get quite large, with the included files. 
 
 You can reduce the final binary size by building without debug info (`go build -ldflags "-s -w"`) and compressing the resulting binary with [upx](https://upx.github.io/) (`upx binname`).
 
 **Note:** If you don't need to access the compressed form of the files I would advise to just use [upx](https://upx.github.io/) and don't add seperate compression to the files. 
+
+You can add compression to the included files with `-gzip`
+**Note:** decompression is optional to allow for the scenario where you want to serve compressed files for a webapp directly.
+
 
 ## OS / Arch Specific Includes
 
@@ -130,7 +132,7 @@ import (
 
 func main() {
 	bincludegen.Generate(binclude.None)
-	// binclude.None means no compression there are also binclude.Gzip and binclude.Brotli
+	// binclude.None means no compression there are also binclude.Gzip
 }
 ```
 
