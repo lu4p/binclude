@@ -120,7 +120,7 @@ func main() {
 ```
 
 main_gen.go:
-```
+```go
 // +build gen
 
 package main
