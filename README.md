@@ -20,7 +20,7 @@ binclude is a tool for including static files into Go binaries.
 
 ## Install
 ```
-go get -u github.com/lu4p/binclude/cmd/binclude
+GO111MODULE=on go get -u github.com/lu4p/binclude/cmd/binclude
 ```
 ## Usage
 ```go
