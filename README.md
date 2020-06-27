@@ -75,3 +75,26 @@ The resulting binary can get quite large, with the included files. You can add c
 You can reduce the final binary size by building without debug info (`go build -ldflags "-s -w"`) and compressing the resulting binary with [upx](https://upx.github.io/) (`upx binname`).
 
 **Note:** If you don't need to access the compressed form of the files I would advise to just use [upx](https://upx.github.io/) and don't add seperate compression to the files. 
+
+## OS / Arch Specific Includes
+
+Binclude supports including binaries only on specific architectures and OS. Binclude follows the same pattern as [Go's Build Constraints](https://golang.org/pkg/go/build/#hdr-Build_Constraints) and will ignore files that contain the suffixes:
+```
+*_GOOS
+*_GOARCH
+*_GOOS_GOARCH
+```
+If they do not match the current GOOS / GOARCH.
+
+For example, if you want to include a binary only on Windows you could have a file `static_windows.go` and reference the static file:
+```go
+//+build windows
+
+package main
+
+import "github.com/lu4p/binclude"
+
+func bar() {
+  binclude.Include("./windows-file.dll")
+}
+```
