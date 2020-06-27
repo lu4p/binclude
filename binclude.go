@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/andybalholm/brotli"
 	"github.com/gabriel-vasile/mimetype"
 )
 
@@ -132,8 +131,6 @@ const (
 	None Compression = iota
 	// Gzip use gzip compression
 	Gzip
-	// Brotli use gzip compression
-	Brotli
 )
 
 // Decompress turns a FileSystem with compressed files into a filesystem without compressed files
@@ -152,10 +149,6 @@ func (fs FileSystem) Decompress() (err error) {
 			if err != nil {
 				return fmt.Errorf("Gzip err: %v", err)
 			}
-		}
-
-		if file.Compression == Brotli {
-			compReader = brotli.NewReader(f)
 		}
 
 		content, err := ioutil.ReadAll(compReader)
@@ -186,10 +179,6 @@ func (fs FileSystem) Compress(algo Compression) error {
 		var writer io.WriteCloser
 		if algo == Gzip {
 			writer = gzip.NewWriter(&b)
-		}
-
-		if algo == Brotli {
-			writer = brotli.NewWriter(&b)
 		}
 
 		_, err := writer.Write(file.Content)
