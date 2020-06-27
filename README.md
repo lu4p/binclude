@@ -78,7 +78,7 @@ You can reduce the final binary size by building without debug info (`go build -
 
 ## OS / Arch Specific Includes
 
-Binclude supports including binaries only on specific architectures and OS. Binclude follows the same pattern as [Go's Build Constraints](https://golang.org/pkg/go/build/#hdr-Build_Constraints) and will ignore files that contain the suffixes:
+Binclude supports including files/binaries only on specific architectures and OS. Binclude follows the same pattern as [Go's Build Constraints](https://golang.org/pkg/go/build/#hdr-Build_Constraints) and will ignore files that contain the suffixes:
 ```
 *_GOOS
 *_GOARCH
