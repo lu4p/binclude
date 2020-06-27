@@ -43,8 +43,6 @@ func fileToAst(path string, file *binclude.File, num int) (c *ast.ValueSpec, m *
 	compressionName := "None"
 	if file.Compression == binclude.Gzip {
 		compressionName = "Gzip"
-	} else if file.Compression == binclude.Brotli {
-		compressionName = "Brotli"
 	}
 
 	m = &ast.KeyValueExpr{
