@@ -14,9 +14,5 @@ jobs:
         go-version: ${{ matrix.go-version }}
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
-
-    - name: Go binexec generate
-      run: go generate ./binexec/example/
-
     - name: Test
       run: bash test.sh
