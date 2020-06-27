@@ -1,3 +1,4 @@
+// Package bincludegen generates the binclude.go file
 package bincludegen
 
 import (
