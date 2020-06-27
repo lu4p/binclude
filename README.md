@@ -80,13 +80,12 @@ You can add compression to the included files with `-gzip`
 
 ## OS / Arch Specific Includes
 
-Binclude supports including files/binaries only on specific architectures and OS. Binclude follows the same pattern as [Go's Build Constraints](https://golang.org/pkg/go/build/#hdr-Build_Constraints) and will ignore files that contain the suffixes:
+Binclude supports including files/binaries only on specific architectures and OS. Binclude follows the same pattern as [Go's Build Constraints](https://golang.org/pkg/go/build/#hdr-Build_Constraints) and will generate files like `binclude_windows.go` which contains all windows specific files:
 ```
 *_GOOS
 *_GOARCH
 *_GOOS_GOARCH
 ```
-If they do not match the current GOOS / GOARCH.
 
 For example, if you want to include a binary only on Windows you could have a file `static_windows.go` and reference the static file:
 ```go
