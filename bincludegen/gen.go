@@ -24,22 +24,18 @@ var (
 
 	fset *token.FileSet
 
-	brotli bool
-	gzip   bool
+	gzip bool
 )
 
 func init() {
 	flag.BoolVar(&gzip, "gzip", false, "compress files with gzip")
-	flag.BoolVar(&brotli, "brotli", false, "compress files with brotli")
 }
 
 // Main1 gets called by cmd/binclude for code generation
 func Main1() int {
 	flag.Parse()
 	compress := binclude.None
-	if brotli {
-		compress = binclude.Brotli
-	} else if gzip {
+	if gzip {
 		compress = binclude.Gzip
 	}
 
