@@ -1,7 +1,9 @@
+go get -u github.com/lu4p/binclude@master
 ! binclude
 
 -- go.mod --
 module test/main
+
 -- main.go --
 package main
 

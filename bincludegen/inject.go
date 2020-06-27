@@ -204,11 +204,17 @@ func fileSystem2Ast(pkgName *ast.Ident, fs *binclude.FileSystem, buildTag string
 func generateFiles(pkgName *ast.Ident, fileSystems map[string]*binclude.FileSystem) error {
 	for buildTag, fs := range fileSystems {
 		if buildTag == "default" {
-			generateFile(pkgName, fs)
+			err := generateFile(pkgName, fs)
+			if err != nil {
+				return err
+			}
 			continue
 		}
 
-		generateTagFile(pkgName, fs, buildTag)
+		err := generateTagFile(pkgName, fs, buildTag)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

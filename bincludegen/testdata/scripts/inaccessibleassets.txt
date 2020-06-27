@@ -1,3 +1,4 @@
+go get -u github.com/lu4p/binclude@master
 [!windows] chmod 000 assets
 [!windows] ! binclude
 [!windows] chmod 755 assets
