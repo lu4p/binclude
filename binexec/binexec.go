@@ -4,9 +4,12 @@ package binexec
 import (
 	"context"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
+	"strings"
 
 	"github.com/lu4p/binclude"
 )
@@ -14,6 +17,9 @@ import (
 // Cmd same as Cmd in the os/exec package
 type Cmd struct {
 	OsCmd *exec.Cmd
+	// Cache if set to true the binary won't be deleted after execution.
+	// If the ModTime of the cached binclude file changes the cache gets invalidated automtically.
+	Cache bool
 }
 
 // Command similar to Command in the os/exec package,
@@ -36,7 +42,35 @@ func Command(fs binclude.FileSystem, bincludePath string, arg ...string) (*Cmd, 
 func copyCommand(fs binclude.FileSystem, bincludePath string) (string, error) {
 	dir, _ := os.UserCacheDir()
 
-	execPath := filepath.Join(dir, filepath.Base(bincludePath))
+	info, err := fs.Stat(bincludePath)
+	if err != nil {
+		return "", err
+	}
+
+	nanoSec := strconv.Itoa(info.ModTime().Nanosecond())
+
+	namePart := "_" + filepath.Base(bincludePath)
+
+	execPath := filepath.Join(dir, nanoSec+namePart)
+
+	// exit early if file is already cached
+	_, err = os.Stat(execPath)
+	if err == nil {
+		return execPath, nil
+	}
+
+	infos, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return "", err
+	}
+
+	// remove invalidated cache files
+	for _, info := range infos {
+		if strings.HasSuffix(info.Name(), namePart) {
+			os.Remove(filepath.Join(dir, info.Name())) // don't check for error because we don't really care if the file is removed
+			// no break because there could be multiple cached versions
+		}
+	}
 
 	return execPath, fs.CopyFile(bincludePath, execPath)
 }
@@ -58,9 +92,12 @@ func CommandContext(ctx context.Context, fs binclude.FileSystem, bincludePath st
 }
 
 // Run is similar to (*Cmd).Run() in the os/exec package,
-// but deletes the executable at Cmd.Path
+// but deletes the executable at Cmd.Path if c.Cache is false
 func (c *Cmd) Run() error {
-	defer os.Remove(c.OsCmd.Path)
+	if !c.Cache {
+		defer os.Remove(c.OsCmd.Path)
+	}
+
 	return c.OsCmd.Run()
 }
 
@@ -90,8 +127,11 @@ func (c *Cmd) String() string {
 }
 
 // Wait is similar to (*Cmd).Wait() in the os/exec package,
-// but deletes the executable at Cmd.Path
+// but deletes the executable at Cmd.Path if c.Cache is false
 func (c *Cmd) Wait() error {
-	defer os.Remove(c.OsCmd.Path)
+	if !c.Cache {
+		defer os.Remove(c.OsCmd.Path)
+	}
+
 	return c.OsCmd.Wait()
 }
