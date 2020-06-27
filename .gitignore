@@ -7,3 +7,4 @@ binexec/example/testprg/testprg.exe
 test/test.go
 profile.out
 /test
+binexec/example/testprg/testprg_darwin

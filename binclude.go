@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gabriel-vasile/mimetype"
@@ -30,13 +31,18 @@ func Include(name string) {}
 func IncludeFromFile(name string) {}
 
 // FileSystem implements access to a collection of named files.
-type FileSystem map[string]*File
+type FileSystem struct {
+	Files
+	sync.RWMutex
+}
+
+type Files map[string]*File
 
 // check that the http.FileSystem interface is implemented
 var _ http.FileSystem = new(FileSystem)
 
 // Open returns a File using the http.File interface
-func (fs FileSystem) Open(name string) (http.File, error) {
+func (fs *FileSystem) Open(name string) (http.File, error) {
 	if Debug {
 		name = filepath.FromSlash(name)
 
@@ -44,10 +50,10 @@ func (fs FileSystem) Open(name string) (http.File, error) {
 	}
 
 	name = strings.TrimPrefix(name, "./")
-	if f, ok := fs[name]; ok {
+	if f, ok := fs.Files[name]; ok {
 		f.reader = bytes.NewReader(f.Content)
 		f.path = name
-		f.fs = &fs
+		f.fs = fs
 		return f, nil
 	}
 
@@ -56,7 +62,7 @@ func (fs FileSystem) Open(name string) (http.File, error) {
 
 // Stat returns a FileInfo describing the named file.
 // If there is an error, it will be of type *PathError.
-func (fs FileSystem) Stat(name string) (os.FileInfo, error) {
+func (fs *FileSystem) Stat(name string) (os.FileInfo, error) {
 	f, err := fs.Open(name)
 	if err != nil {
 		return nil, err
@@ -70,7 +76,7 @@ func (fs FileSystem) Stat(name string) (os.FileInfo, error) {
 // A successful call returns err == nil, not err == EOF. Because ReadFile
 // reads the whole file, it does not treat an EOF from Read as an error
 // to be reported.
-func (fs FileSystem) ReadFile(filename string) ([]byte, error) {
+func (fs *FileSystem) ReadFile(filename string) ([]byte, error) {
 	f, err := fs.Open(filename)
 	if err != nil {
 		return nil, err
@@ -82,7 +88,7 @@ func (fs FileSystem) ReadFile(filename string) ([]byte, error) {
 
 // ReadDir reads the directory named by dirname and returns
 // a list of directory entries sorted by filename.
-func (fs FileSystem) ReadDir(dirname string) ([]os.FileInfo, error) {
+func (fs *FileSystem) ReadDir(dirname string) ([]os.FileInfo, error) {
 	f, err := fs.Open(dirname)
 	if err != nil {
 		return nil, err
@@ -95,7 +101,7 @@ func (fs FileSystem) ReadDir(dirname string) ([]os.FileInfo, error) {
 
 // CopyFile copies a specific file from a binclude FileSystem to the hosts FileSystem.
 // Permissions are copied from the included file.
-func (fs FileSystem) CopyFile(bincludePath, hostPath string) error {
+func (fs *FileSystem) CopyFile(bincludePath, hostPath string) error {
 	src, err := fs.Open(bincludePath)
 	if err != nil {
 		return err
@@ -134,8 +140,8 @@ const (
 )
 
 // Decompress turns a FileSystem with compressed files into a filesystem without compressed files
-func (fs FileSystem) Decompress() (err error) {
-	for path, file := range fs {
+func (fs *FileSystem) Decompress() (err error) {
+	for path, file := range fs.Files {
 		if file.Compression == None {
 			continue
 		}
@@ -157,8 +163,7 @@ func (fs FileSystem) Decompress() (err error) {
 		}
 		f.Close()
 
-		fs[path].Content = content
-
+		fs.Files[path].Content = content
 	}
 
 	return nil
@@ -166,11 +171,11 @@ func (fs FileSystem) Decompress() (err error) {
 }
 
 // Compress turns a FileSystem without compressed files into a filesystem with compressed files
-func (fs FileSystem) Compress(algo Compression) error {
+func (fs *FileSystem) Compress(algo Compression) error {
 	if algo == None {
 		return nil
 	}
-	for _, file := range fs {
+	for _, file := range fs.Files {
 		if file.Mode.IsDir() || !shouldCompress(file.Content) {
 			continue
 		}
@@ -260,7 +265,7 @@ func (f *File) Readdir(count int) (infos []os.FileInfo, err error) {
 		fileDir = filepath.Dir(f.path)
 	}
 
-	for path, file := range *f.fs {
+	for path, file := range *&f.fs.Files {
 		if filepath.Dir(path) != fileDir {
 			continue
 		}

@@ -23,8 +23,8 @@ func dataToByteSlice(data []byte) *ast.CallExpr {
 	}
 }
 
-func fileToAst(path string, file *binclude.File, num int) (c *ast.ValueSpec, m *ast.KeyValueExpr) {
-	constName := "_binclude" + strconv.Itoa(num)
+func fileToAst(path string, file *binclude.File, num int, buildTag string) (c *ast.ValueSpec, m *ast.KeyValueExpr) {
+	constName := "_binclude" + buildTag + strconv.Itoa(num)
 	var x ast.Expr = &ast.Ident{Name: "nil"}
 
 	if !file.Mode.IsDir() {
@@ -60,9 +60,7 @@ func fileToAst(path string, file *binclude.File, num int) (c *ast.ValueSpec, m *
 					},
 				},
 				&ast.KeyValueExpr{
-					Key: &ast.Ident{
-						Name: "Mode",
-					},
+					Key: &ast.Ident{Name: "Mode"},
 					Value: &ast.BasicLit{
 						Kind:  token.INT,
 						Value: strconv.Itoa(int(file.Mode)),
@@ -105,15 +103,15 @@ func fileToAst(path string, file *binclude.File, num int) (c *ast.ValueSpec, m *
 	return c, m
 }
 
-func generateFile(pkgName *ast.Ident, fs binclude.FileSystem) error {
+func fileSystem2Ast(pkgName *ast.Ident, fs *binclude.FileSystem, buildTag string) *ast.File {
 	var (
 		astConsts []ast.Spec
 		astFiles  []ast.Expr
 	)
 
 	num := 0
-	for path, file := range fs {
-		astConst, astFile := fileToAst(path, file, num)
+	for path, file := range fs.Files {
+		astConst, astFile := fileToAst(path, file, num, buildTag)
 		if !file.Mode.IsDir() {
 			astConsts = append(astConsts, astConst)
 			num++
@@ -122,17 +120,41 @@ func generateFile(pkgName *ast.Ident, fs binclude.FileSystem) error {
 		astFiles = append(astFiles, astFile)
 	}
 
+	fsName := "BinFS"
+	if buildTag != "" {
+		fsName = "_binfs" + buildTag
+	}
+
 	astVars := append(astConsts, &ast.ValueSpec{
 		Names: []*ast.Ident{
-			{Name: "BinFS"},
+			{Name: fsName},
 		},
 		Values: []ast.Expr{
-			&ast.CompositeLit{
-				Type: &ast.SelectorExpr{
-					X:   &ast.Ident{Name: "binclude"},
-					Sel: &ast.Ident{Name: "FileSystem"},
+			&ast.UnaryExpr{
+				Op: token.AND,
+				X: &ast.CompositeLit{
+					Type: &ast.SelectorExpr{
+						X:   &ast.Ident{Name: "binclude"},
+						Sel: &ast.Ident{Name: "FileSystem"},
+					},
+					Elts: []ast.Expr{
+						&ast.KeyValueExpr{
+							Key: &ast.Ident{Name: "Files"},
+							Value: &ast.CompositeLit{
+								Type: &ast.MapType{
+									Key: &ast.Ident{Name: "string"},
+									Value: &ast.StarExpr{
+										X: &ast.SelectorExpr{
+											X:   &ast.Ident{Name: "binclude"},
+											Sel: &ast.Ident{Name: "File"},
+										},
+									},
+								},
+								Elts: astFiles,
+							},
+						},
+					},
 				},
-				Elts: astFiles,
 			},
 		},
 	})
@@ -155,7 +177,7 @@ func generateFile(pkgName *ast.Ident, fs binclude.FileSystem) error {
 		})
 	}
 
-	bincludeFile := &ast.File{
+	return &ast.File{
 		Doc: &ast.CommentGroup{
 			List: []*ast.Comment{
 				{
@@ -177,18 +199,95 @@ func generateFile(pkgName *ast.Ident, fs binclude.FileSystem) error {
 			},
 		},
 	}
+}
 
-	f, err := os.OpenFile("binclude.go", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+func generateFiles(pkgName *ast.Ident, fileSystems map[string]*binclude.FileSystem) error {
+	for buildTag, fs := range fileSystems {
+		if buildTag == "default" {
+			generateFile(pkgName, fs)
+			continue
+		}
+
+		generateTagFile(pkgName, fs, buildTag)
+	}
+	return nil
+}
+
+func generateFile(pkgName *ast.Ident, fs *binclude.FileSystem) error {
+	bincludeFile := fileSystem2Ast(pkgName, fs, "")
+
+	return writeAstToFile(bincludeFile, "binclude.go")
+}
+
+func generateTagFile(pkgName *ast.Ident, fs *binclude.FileSystem, buildTag string) error {
+	bincludeFile := fileSystem2Ast(pkgName, fs, buildTag)
+
+	bincludeFile.Decls = append(bincludeFile.Decls, &ast.FuncDecl{
+		Name: &ast.Ident{
+			Name: "init",
+		},
+		Type: &ast.FuncType{
+			Params: &ast.FieldList{},
+		},
+		Body: &ast.BlockStmt{
+			List: []ast.Stmt{
+				&ast.ExprStmt{
+					X: &ast.CallExpr{
+						Fun: &ast.SelectorExpr{
+							X:   &ast.Ident{Name: "BinFS"},
+							Sel: &ast.Ident{Name: "Lock"},
+						},
+					},
+				},
+				&ast.RangeStmt{
+					Key:   &ast.Ident{Name: "path"},
+					Value: &ast.Ident{Name: "file"},
+					Tok:   token.DEFINE,
+					X: &ast.SelectorExpr{
+						X:   &ast.Ident{Name: "_binfs" + buildTag},
+						Sel: &ast.Ident{Name: "Files"},
+					},
+					Body: &ast.BlockStmt{
+						List: []ast.Stmt{
+							&ast.AssignStmt{
+								Lhs: []ast.Expr{
+									&ast.IndexExpr{
+										X: &ast.SelectorExpr{
+											X:   &ast.Ident{Name: "BinFS"},
+											Sel: &ast.Ident{Name: "Files"},
+										},
+										Index: &ast.Ident{Name: "path"},
+									},
+								},
+								Tok: token.ASSIGN,
+								Rhs: []ast.Expr{
+									&ast.Ident{Name: "file"},
+								},
+							},
+						},
+					},
+				},
+				&ast.ExprStmt{
+					X: &ast.CallExpr{
+						Fun: &ast.SelectorExpr{
+							X:   &ast.Ident{Name: "BinFS"},
+							Sel: &ast.Ident{Name: "Unlock"},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	return writeAstToFile(bincludeFile, "binclude"+buildTag+".go")
+}
+
+func writeAstToFile(file *ast.File, filename string) error {
+	f, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	err = printer.Fprint(f, fset, bincludeFile)
-	if err != nil {
-		return err
-	}
-
-	return nil
-
+	return printer.Fprint(f, fset, file)
 }

@@ -73,27 +73,6 @@ func printosfile() {
 	fmt.Println(string(content))
 }
 
--- second_ppc64.go --
-package main
-
-import (
-	"fmt"
-	"log"
-
-	"github.com/lu4p/binclude"
-)
-
-func printosfile() {
-	binclude.Include("neverinclude.txt")
-	content, err := BinFS.ReadFile("neverinclude.txt")
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	fmt.Println(string(content))
-}
-
-
 -- linux.txt --
 linux
 -- darwin.txt --

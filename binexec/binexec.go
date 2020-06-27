@@ -25,7 +25,7 @@ type Cmd struct {
 // Command similar to Command in the os/exec package,
 // but copies the executeable to run from bincludePath
 // to the host os.
-func Command(fs binclude.FileSystem, bincludePath string, arg ...string) (*Cmd, error) {
+func Command(fs *binclude.FileSystem, bincludePath string, arg ...string) (*Cmd, error) {
 	execPath, err := copyCommand(fs, bincludePath)
 	if err != nil {
 		return nil, err
@@ -39,7 +39,7 @@ func Command(fs binclude.FileSystem, bincludePath string, arg ...string) (*Cmd, 
 }
 
 // copyCommand copy a file from binclude.FileSystem to os.UserCacheDir()
-func copyCommand(fs binclude.FileSystem, bincludePath string) (string, error) {
+func copyCommand(fs *binclude.FileSystem, bincludePath string) (string, error) {
 	dir, _ := os.UserCacheDir()
 
 	info, err := fs.Stat(bincludePath)
@@ -78,7 +78,7 @@ func copyCommand(fs binclude.FileSystem, bincludePath string) (string, error) {
 // CommandContext similar to CommandContext in the os/exec
 // package but copies the executeable to run from bincludePath
 // to the host os.
-func CommandContext(ctx context.Context, fs binclude.FileSystem, bincludePath string, arg ...string) (*Cmd, error) {
+func CommandContext(ctx context.Context, fs *binclude.FileSystem, bincludePath string, arg ...string) (*Cmd, error) {
 	execPath, err := copyCommand(fs, bincludePath)
 	if err != nil {
 		return nil, err

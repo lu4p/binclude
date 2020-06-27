@@ -3,7 +3,7 @@ package binexec_test
 import (
 	"context"
 	"io/ioutil"
-	"runtime"
+	"log"
 	"testing"
 
 	"github.com/lu4p/binclude/binexec"
@@ -12,11 +12,11 @@ import (
 
 var BinFS = example.BinFS
 
-var testprg = "testprg/testprg"
+var testprg = example.Testprg
 
 func init() {
-	if runtime.GOOS == "windows" {
-		testprg += ".exe"
+	for path := range BinFS.Files {
+		log.Println(path)
 	}
 }
 

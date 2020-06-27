@@ -11,7 +11,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 
@@ -50,6 +49,11 @@ func Main1() int {
 	return 0
 }
 
+type goFile struct {
+	path    string
+	astFile *ast.File
+}
+
 // Generate a binclude.go file for the current working directory
 func Generate(compress binclude.Compression) error {
 	paths, _ := filepath.Glob("*.go")
@@ -60,69 +64,50 @@ func Generate(compress binclude.Compression) error {
 
 	fset = token.NewFileSet()
 
-	var files []*ast.File
+	var goFiles []goFile
 	for _, path := range paths {
 		if strings.HasSuffix(path, "binclude.go") {
 			continue
 		}
 
-		temppath := strings.TrimSuffix(path, ".go")
-
-		skip := false
-		for _, arch := range archs {
-			if runtime.GOARCH == arch {
-				continue
-			}
-
-			if strings.HasSuffix(temppath, arch) {
-				skip = true
-			}
-		}
-
-		temppath = strings.TrimSuffix(temppath, "_"+runtime.GOARCH)
-
-		for _, sys := range operatingSystems {
-			if runtime.GOOS == sys {
-				continue
-			}
-
-			if strings.HasSuffix(temppath, sys) {
-				skip = true
-			}
-		}
-
-		if skip {
-			continue
-		}
-
-		file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
+		astFile, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
 		if err != nil {
 			return err
 		}
-		files = append(files, file)
+		goFiles = append(goFiles, goFile{
+			path:    path,
+			astFile: astFile,
+		})
 	}
 
-	pkgName := files[0].Name
+	pkgName := goFiles[0].astFile.Name
 
-	paths, err := detectIncluded(files)
+	includedFiles, err := detectIncluded(goFiles)
 	if err != nil {
 		return err
 	}
 
-	fs, err := buildFS(paths)
+	fileSystems, err := buildFS(includedFiles)
 	if err != nil {
 		return err
 	}
 
-	if err := fs.Compress(compress); err != nil {
-		return err
+	for _, fs := range fileSystems {
+		if err := fs.Compress(compress); err != nil {
+			return err
+		}
 	}
 
-	return generateFile(pkgName, fs)
+	return generateFiles(pkgName, fileSystems)
 }
 
-func buildFS(paths []string) (binclude.FileSystem, error) {
-	fs := make(binclude.FileSystem)
+func buildFS(includedFiles []includedFile) (map[string]*binclude.FileSystem, error) {
+	const bincludeName = "binclude"
+	fileSystems := make(map[string]*binclude.FileSystem)
+	var buildTag string
+
+	fileSystems["default"] = &binclude.FileSystem{}
+	fileSystems["default"].Files = make(binclude.Files)
 
 	var walkFn filepath.WalkFunc = func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -136,11 +121,17 @@ func buildFS(paths []string) (binclude.FileSystem, error) {
 			if err != nil {
 				return err
 			}
+
 		}
 
 		path = filepath.ToSlash(path)
 
-		fs[path] = &binclude.File{
+		if fileSystems[buildTag] == nil {
+			fileSystems[buildTag] = &binclude.FileSystem{}
+			fileSystems[buildTag].Files = make(binclude.Files)
+		}
+
+		fileSystems[buildTag].Files[path] = &binclude.File{
 			Filename: info.Name(),
 			Mode:     info.Mode(),
 			ModTime:  info.ModTime(),
@@ -150,18 +141,42 @@ func buildFS(paths []string) (binclude.FileSystem, error) {
 		return nil
 	}
 
-	for _, path := range paths {
-		err := filepath.Walk(path, walkFn)
+	for _, file := range includedFiles {
+		buildTag = ""
+
+		for _, arch := range archs {
+			if strings.HasSuffix(file.goFile, arch+".go") {
+				buildTag = "_" + arch
+			}
+		}
+
+		for _, sys := range operatingSystems {
+			if strings.HasSuffix(file.goFile, sys+buildTag+".go") {
+				buildTag = "_" + sys + buildTag
+			}
+		}
+
+		if len(buildTag) == 0 {
+			buildTag = "default"
+		}
+
+		err := filepath.Walk(file.includedPath, walkFn)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return fs, nil
+	return fileSystems, nil
 }
 
-func detectIncluded(files []*ast.File) ([]string, error) {
-	var includedPaths []string
+type includedFile struct {
+	includedPath, goFile string
+}
+
+func detectIncluded(goFiles []goFile) ([]includedFile, error) {
+	var includedFiles []includedFile
+
+	var currentGoFile string
 
 	visit := func(node ast.Node) bool {
 		if node == nil {
@@ -211,35 +226,45 @@ func detectIncluded(files []*ast.File) ([]string, error) {
 				}
 			}
 
-			includedPaths = append(includedPaths, paths...)
+			for _, path := range paths {
+				includedFiles = append(includedFiles, includedFile{
+					goFile:       currentGoFile,
+					includedPath: path,
+				})
+			}
+
 			return true
 		}
 
-		includedPaths = append(includedPaths, value)
+		includedFiles = append(includedFiles, includedFile{
+			goFile:       currentGoFile,
+			includedPath: value,
+		})
 
 		return true
 	}
 
-	for _, file := range files {
-		ast.Inspect(file, visit)
+	for _, file := range goFiles {
+		currentGoFile = file.path
+		ast.Inspect(file.astFile, visit)
 	}
 
-	for i, path := range includedPaths {
+	for i, file := range includedFiles {
 		var err error
 
-		if filepath.IsAbs(path) {
+		if filepath.IsAbs(file.includedPath) {
 			return nil, errors.New("only supports relative include paths")
 		}
 
-		_, err = os.Stat(path)
+		_, err = os.Stat(file.includedPath)
 		if err != nil {
 			return nil, err
 		}
 
-		includedPaths[i] = strings.TrimPrefix(path, "./")
+		includedFiles[i].includedPath = strings.TrimPrefix(file.includedPath, "./")
 	}
 
-	return includedPaths, nil
+	return includedFiles, nil
 }
 
 func remove(slice []string, s int) []string {

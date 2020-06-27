@@ -97,7 +97,7 @@ func TestCompression(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if BinFS["assets/logo_nocompress.png"].Compression != binclude.None {
+	if BinFS.Files["assets/logo_nocompress.png"].Compression != binclude.None {
 		t.Fatal("Unexpected compressed png")
 	}
 
@@ -187,7 +187,7 @@ func TestStat(t *testing.T) {
 }
 
 func TestFileInfo(t *testing.T) {
-	file := BinFS["assets/asset1.txt"]
+	file := BinFS.Files["assets/asset1.txt"]
 	info, err := BinFS.Stat("./assets/asset1.txt")
 	if err != nil {
 		t.Fatal("cannot stat file")
