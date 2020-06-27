@@ -124,37 +124,6 @@ func TestCompression(t *testing.T) {
 		t.Fatal("File differs after compression and decompression.")
 	}
 
-	err = BinFS.Compress(binclude.Brotli)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if BinFS["assets/logo_nocompress.png"].Compression != binclude.None {
-		t.Fatal("Unexpected compressed png")
-	}
-
-	brotliContent, err := BinFS.ReadFile(testPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if string(startContent) == string(brotliContent) {
-		t.Fatal("Brotli didn't compress")
-	}
-
-	err = BinFS.Decompress()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	decBrotliContent, err := BinFS.ReadFile(testPath)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if string(startContent) != string(decBrotliContent) {
-		t.Fatal("File differs after compression and decompression.")
-	}
 }
 
 func TestReadFile(t *testing.T) {
