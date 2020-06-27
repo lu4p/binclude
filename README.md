@@ -105,8 +105,7 @@ main.go:
 ```go
 // +build !gen
 
-//go:generate go build -tags=gen -o generator
-//go:generate ./generator
+//go:generate go run -tags=gen .
 package main
 
 import (
