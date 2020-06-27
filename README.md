@@ -132,7 +132,7 @@ import (
 
 func main() {
 	bincludegen.Generate(binclude.None)
-	// binclude.None means no compression there are also binclude.Gzip
+	// binclude.None means no compression there is also binclude.Gzip for gzip
 }
 ```
 
