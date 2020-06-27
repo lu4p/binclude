@@ -1,4 +1,4 @@
-package main
+package bincludegen_test
 
 import (
 	"flag"
@@ -6,13 +6,14 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/lu4p/binclude/bincludegen"
 	"github.com/rogpeppe/go-internal/gotooltest"
 	"github.com/rogpeppe/go-internal/testscript"
 )
 
 func TestMain(m *testing.M) {
 	os.Exit(testscript.RunMain(m, map[string]func() int{
-		"binclude": main1,
+		"binclude": bincludegen.Main1,
 	}))
 }
 
