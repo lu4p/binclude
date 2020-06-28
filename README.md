@@ -80,7 +80,7 @@ go generate
 go build
 ```
 
-A complete example is can be found [here](https://github.com/lu4p/binclude/tree/master/example).
+A complete example can be found [here](https://github.com/lu4p/binclude/tree/master/example).
 
 ## Binary size
 The resulting binary, with the included files can get quite large. 
