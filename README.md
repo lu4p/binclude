@@ -16,6 +16,7 @@ binclude is a tool for including static files into Go binaries.
 - high test coverage
 - supports execution of executables directly from a `binclude.FileSystem` (os/exec wrapper)
 - optional compression of files with gzip `binclude -gzip`
+- debug mode to read the files from disk
 
 ## Install
 ```
