@@ -98,6 +98,8 @@ func bar() {
 }
 ```
 
+This is used in the [binexec example](https://github.com/lu4p/binclude/tree/master/binexec/example).
+
 ## Advanced Usage
 The generator can also be included into your package to allow for the code generator to run after all module dependencies are installed.
 Without installing the binclude generator to the PATH seperatly.
