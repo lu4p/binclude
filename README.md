@@ -8,15 +8,15 @@
 binclude is a tool for including static files into Go binaries.
 - focuses on ease of use
 - the bincluded files add no more than the filesize to the binary
-- uses ast for typesafe parsing and code generation. [astextract](https://github.com/lu4p/astextract) was used for generating the ast definitions in the generator
+- uses ast for typesafe parsing and code generation. [astextract](https://github.com/lu4p/astextract) was used for generating the ast definitions in the generator.
 - each package can have its own `binclude.FileSystem`
 - `binclude.FileSystem` implements the `http.FileSystem` interface
 - `ioutil` like functions `FileSystem.ReadFile`, `FileSystem.ReadDir`
 - include all files/ directories under a given path by calling `binclude.Include("./path")`
 - high test coverage
-- supports execution of executables directly from a `binclude.FileSystem` (os/exec wrapper)
+- supports execution of executables directly from a `binclude.FileSystem` via `binexec` (os/exec wrapper)
 - optional compression of files with gzip `binclude -gzip`
-- debug mode to read the files from disk
+- debug mode to read files from disk `binclude.Debug = true`
 
 ## Install
 ```
@@ -31,14 +31,17 @@ package main
 import (
 	"io/ioutil"
 	"log"
+	"path/filepath"
 
 	"github.com/lu4p/binclude"
 )
 
-func main() {
-	binclude.Include("./assets")
-	binclude.Include("file.txt")
+var assetPath = binclude.Include("./assets") // include ./assets with all files and subdirectories
 
+func main() {
+	binclude.Include("file.txt") // include file.txt
+
+	// like os.Open
 	f, err := BinFS.Open("file.txt")
 	if err != nil {
 		log.Fatalln(err)
@@ -51,7 +54,16 @@ func main() {
 
 	log.Println(string(out))
 
-	infos, err := BinFS.ReadDir("./assets")
+	// like ioutil.Readfile
+	content, err := BinFS.ReadFile(filepath.Join(assetPath, "asset1.txt"))
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	log.Println(string(content))
+
+	// like ioutil.ReadDir
+	infos, err := BinFS.ReadDir(assetPath)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -67,8 +79,11 @@ To build use:
 go generate
 go build
 ```
+
+A complete example is can be found [here](https://github.com/lu4p/binclude/tree/master/example).
+
 ## Binary size
-The resulting binary can get quite large, with the included files. 
+The resulting binary, with the included files can get quite large. 
 
 You can reduce the final binary size by building without debug info (`go build -ldflags "-s -w"`) and compressing the resulting binary with [upx](https://upx.github.io/) (`upx binname`).
 
@@ -81,12 +96,15 @@ You can add compression to the included files with `-gzip`
 
 ## OS / Arch Specific Includes
 
-Binclude supports including files/binaries only on specific architectures and OS. Binclude follows the same pattern as [Go's Build Constraints](https://golang.org/pkg/go/build/#hdr-Build_Constraints) and will generate files like `binclude_windows.go` which contains all windows specific files:
+binclude supports including files/binaries only on specific architectures and operating systems. binclude follows the same pattern as [Go's implicit Build Constraints](https://golang.org/pkg/go/build/#hdr-Build_Constraints). It will generate files for the specific platforms like `binclude_windows.go` which contains all windows specific files.
+
+If a file's name, matches any of the following patterns: 
 ```
-*_GOOS
-*_GOARCH
-*_GOOS_GOARCH
+*_GOOS.go
+*_GOARCH.go
+*_GOOS_GOARCH.go
 ```
+binclude will consider all files included by `binclude.Include` in this file as files which should only be included on a specific GOOS and/ or GOARCH.
 
 For example, if you want to include a binary only on Windows you could have a file `static_windows.go` and reference the static file:
 ```go
@@ -99,7 +117,9 @@ func bar() {
 }
 ```
 
-This is used in the [binexec example](https://github.com/lu4p/binclude/tree/master/binexec/example).
+OS / Arch Specific Includes are used in the [binexec example](https://github.com/lu4p/binclude/tree/master/binexec/example).
+
+**Note:** explicit build tags like `// +build debug` are not supported for including files conditionally.
 
 ## Advanced Usage
 The generator can also be included into your package to allow for the code generator to run after all module dependencies are installed.
@@ -135,7 +155,8 @@ import (
 
 func main() {
 	bincludegen.Generate(binclude.None)
-	// binclude.None means no compression there is also binclude.Gzip for gzip
+	// binclude.None == no compression 
+	// binclude.Gzip == gzip compression
 }
 ```
 
