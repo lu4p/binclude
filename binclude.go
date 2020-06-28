@@ -24,7 +24,8 @@ var Debug = false
 
 // Include this file/ directory (including subdirectories) relative to the package path (noop)
 // The path is walked via filepath.Walk and all files found are included
-func Include(name string) {}
+// This function returns the name to make it usable in global variable definitions.
+func Include(name string) string { return name }
 
 // IncludeFromFile like include but reads paths from a textfile.
 // Paths are seperated by a newline (noop)
