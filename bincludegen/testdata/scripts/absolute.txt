@@ -1,8 +1,8 @@
 ! binclude
+cp $MOD_PATH go.mod
+
 ! go build
 
--- go.mod --
-module test/main
 -- main.go --
 package main
 

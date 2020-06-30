@@ -1,12 +1,9 @@
-go get -u github.com/lu4p/binclude@master
 [!windows] chmod 000 assets
 [!windows] ! binclude
 [!windows] chmod 755 assets
 [!windows] chmod 000 assets/asset1.txt
 [!windows] ! binclude
 
--- go.mod --
-module test/main
 -- main.go --
 package main
 

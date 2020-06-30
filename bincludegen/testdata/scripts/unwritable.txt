@@ -1,10 +1,6 @@
-go get -u github.com/lu4p/binclude@master
 [!windows] chmod 544 .  
-
 [!windows] ! binclude
 
--- go.mod --
-module test/main
 -- main.go --
 package main
 

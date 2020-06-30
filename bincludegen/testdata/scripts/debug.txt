@@ -1,11 +1,9 @@
-go get -u github.com/lu4p/binclude@master
 binclude
+cp $MOD_PATH go.mod
 go build
 exec ./main$exe
 cmp stderr main.stderr
 
--- go.mod --
-module test/main
 -- main.go --
 package main
 

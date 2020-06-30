@@ -1,12 +1,10 @@
-go get -u github.com/lu4p/binclude@master
 binclude
+cp $MOD_PATH go.mod
 go run .
 [linux] cmp stdout main.linux.stdout
 [windows] cmp stdout main.windows.stdout
 [darwin] cmp stdout main.darwin.stdout
 
--- go.mod --
-module test/main
 -- main.go --
 package main
 

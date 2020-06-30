@@ -2,6 +2,7 @@ package bincludegen_test
 
 import (
 	"flag"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -22,8 +23,34 @@ var update = flag.Bool("u", false, "update testscript output files")
 func TestScripts(t *testing.T) {
 	t.Parallel()
 
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	data := `module test/main
+
+replace github.com/lu4p/binclude => ` + filepath.Join(wd, "..") + `
+
+require (
+	github.com/lu4p/binclude v1.0.0
+)`
+
+	modPath := filepath.Join(wd, "go.mod.txt")
+	err = ioutil.WriteFile(modPath, []byte(data), 0644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	p := testscript.Params{
 		Dir: filepath.Join("testdata", "scripts"),
+		Setup: func(env *testscript.Env) error {
+			os.Getwd()
+			env.Vars = append(env.Vars,
+				"MOD_PATH="+modPath,
+			)
+			return nil
+		},
 		Cmds: map[string]func(ts *testscript.TestScript, neg bool, args []string){
 			"bincmp": bincmp,
 		},
