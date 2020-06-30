@@ -171,4 +171,4 @@ If you find a feature missing, which you consider a useful addition please open 
 
 If you plan on implementing a new feature please open an issue so we can discuss it first (I don't want you to waste your time).
 
-Pull requests are welcome, and will be timely reviewed and merged, please provide tests for your code (If you don't know how to test your code open a pull request and I will suggest the right testing method).
+Pull requests are welcome, and will be timely reviewed and merged, please provide tests for your code, if you don't know how to test your code open a pull request and I will suggest the right testing method.
