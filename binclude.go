@@ -14,8 +14,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/gabriel-vasile/mimetype"
 )
 
 // Debug if set to true files are read via os.Open() and the bincluded files are
@@ -178,7 +176,7 @@ func (fs *FileSystem) Compress(algo Compression) error {
 		return nil
 	}
 	for _, file := range fs.Files {
-		if file.Mode.IsDir() || !shouldCompress(file.Content) {
+		if file.Mode.IsDir() || !shouldCompress(file.Filename) {
 			continue
 		}
 		var b bytes.Buffer
@@ -203,18 +201,15 @@ func (fs *FileSystem) Compress(algo Compression) error {
 
 // compressExcl exclude certain files from compression which don't compress well
 // inspired by https://github.com/gin-contrib/gzip/blob/master/options.go
-var compressExcl = []string{"application/x-7z-compressed", "application/zip", "application/x-bzip2", "application/gzip", "image/png", "image/jpg", "image/gif"}
+var compressExcl = []string{".jpg", ".jpeg", ".gz", ".png", ".gif", ".zip"}
 
 // shouldCompress says whether a file should be compressed based on its mimetype
-func shouldCompress(content []byte) bool {
-	mimeStr := mimetype.Detect(content).String()
-
+func shouldCompress(name string) bool {
 	for _, excl := range compressExcl {
-		if mimeStr == excl {
+		if strings.HasSuffix(name, excl) {
 			return false
 		}
 	}
-
 	return true
 }
 
