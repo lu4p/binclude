@@ -12,6 +12,7 @@ import (
 
 //go:generate go run ../../cmd/binclude/
 
+// Example shows the example usage for binexec
 func Example() {
 	cmd, err := binexec.Command(BinFS, Testprg)
 	if err != nil {

@@ -212,27 +212,7 @@ func detectIncluded(goFiles []goFile) ([]includedFile, error) {
 		}
 
 		if sel.Sel.Name == "IncludeFromFile" {
-			content, err := ioutil.ReadFile(value)
-			if err != nil {
-				log.Fatalln("cannot read includefile:", value, "err:", err)
-			}
-
-			paths := strings.Split(string(content), "\n")
-			for i := 0; i < len(paths); i++ {
-				paths[i] = strings.TrimSpace(paths[i])
-				if paths[i] == "" {
-					paths = remove(paths, i)
-					i-- // reset positon by one because an element was removed
-				}
-			}
-
-			for _, path := range paths {
-				includedFiles = append(includedFiles, includedFile{
-					goFile:       currentGoFile,
-					includedPath: path,
-				})
-			}
-
+			includedFiles = includeFromFile(value, currentGoFile, includedFiles)
 			return true
 		}
 
@@ -265,6 +245,31 @@ func detectIncluded(goFiles []goFile) ([]includedFile, error) {
 	}
 
 	return includedFiles, nil
+}
+
+func includeFromFile(value, currentGoFile string, includedFiles []includedFile) []includedFile {
+	content, err := ioutil.ReadFile(value)
+	if err != nil {
+		log.Fatalln("cannot read includefile:", value, "err:", err)
+	}
+
+	paths := strings.Split(string(content), "\n")
+	for i := 0; i < len(paths); i++ {
+		paths[i] = strings.TrimSpace(paths[i])
+		if paths[i] == "" {
+			paths = remove(paths, i)
+			i-- // reset position by one because an element was removed
+		}
+	}
+
+	for _, path := range paths {
+		includedFiles = append(includedFiles, includedFile{
+			goFile:       currentGoFile,
+			includedPath: path,
+		})
+	}
+
+	return includedFiles
 }
 
 func remove(slice []string, s int) []string {

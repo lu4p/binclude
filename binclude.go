@@ -28,7 +28,7 @@ var Debug = false
 func Include(name string) string { return name }
 
 // IncludeFromFile like include but reads paths from a textfile.
-// Paths are seperated by a newline (noop)
+// Paths are separated by a newline (noop)
 func IncludeFromFile(name string) {}
 
 // FileSystem implements access to a collection of named files.
@@ -37,6 +37,7 @@ type FileSystem struct {
 	sync.RWMutex
 }
 
+// Files a map from the filepath to the files
 type Files map[string]*File
 
 // check that the http.FileSystem interface is implemented
