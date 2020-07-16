@@ -6,6 +6,7 @@ import (
 	"go/printer"
 	"go/token"
 	"os"
+	"sort"
 	"strconv"
 
 	"github.com/lu4p/binclude"
@@ -110,7 +111,16 @@ func fileSystem2Ast(pkgName *ast.Ident, fs *binclude.FileSystem, buildTag string
 	)
 
 	num := 0
-	for path, file := range fs.Files {
+
+	var paths []string
+	for path := range fs.Files {
+		paths = append(paths, path)
+	}
+
+	sort.Strings(paths)
+
+	for _, path := range paths {
+		file := fs.Files[path]
 		astConst, astFile := fileToAst(path, file, num, buildTag)
 		if !file.Mode.IsDir() {
 			astConsts = append(astConsts, astConst)
