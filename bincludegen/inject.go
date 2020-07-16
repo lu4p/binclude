@@ -3,7 +3,7 @@ package bincludegen
 import (
 	"fmt"
 	"go/ast"
-	"go/printer"
+	"go/format"
 	"go/token"
 	"os"
 	"sort"
@@ -305,5 +305,5 @@ func writeAstToFile(file *ast.File, filename string) error {
 	}
 	defer f.Close()
 
-	return printer.Fprint(f, fset, file)
+	return format.Node(f, fset, file)
 }
