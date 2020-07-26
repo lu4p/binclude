@@ -1,7 +1,6 @@
 package bincludegen
 
 import (
-	"fmt"
 	"go/ast"
 	"go/format"
 	"go/token"
@@ -13,32 +12,24 @@ import (
 )
 
 func dataToByteSlice(data []byte) *ast.CallExpr {
-	return &ast.CallExpr{
-		Fun: &ast.ArrayType{
-			Elt: &ast.Ident{Name: "byte"},
-		},
-		Args: []ast.Expr{&ast.BasicLit{
-			Kind:  token.STRING,
-			Value: fmt.Sprintf("%q", data),
-		}},
-	}
+	return callExpr(&ast.ArrayType{Elt: ident("byte")},
+		stringLiteral(string(data)),
+	)
 }
 
 func fileToAst(path string, file *binclude.File, num int, buildTag string) (c *ast.ValueSpec, m *ast.KeyValueExpr) {
 	constName := "_binclude" + buildTag + strconv.Itoa(num)
-	var x ast.Expr = &ast.Ident{Name: "nil"}
+	var x ast.Expr = ident("nil")
 
 	if !file.Mode.IsDir() {
 		c = &ast.ValueSpec{
-			Names: []*ast.Ident{
-				{Name: constName},
-			},
+			Names: []*ast.Ident{ident(constName)},
 			Values: []ast.Expr{
 				dataToByteSlice(file.Content),
 			},
 		}
 
-		x = &ast.Ident{Name: constName}
+		x = ident(constName)
 	}
 
 	compressionName := "None"
@@ -47,54 +38,30 @@ func fileToAst(path string, file *binclude.File, num int, buildTag string) (c *a
 	}
 
 	m = &ast.KeyValueExpr{
-		Key: &ast.BasicLit{
-			Kind:  token.STRING,
-			Value: `"` + path + `"`,
-		},
+		Key: stringLiteral(path),
 		Value: &ast.CompositeLit{
 			Elts: []ast.Expr{
 				&ast.KeyValueExpr{
-					Key: &ast.Ident{Name: "Filename"},
-					Value: &ast.BasicLit{
-						Kind:  token.STRING,
-						Value: `"` + file.Filename + `"`,
-					},
+					Key:   ident("Filename"),
+					Value: stringLiteral(file.Filename),
 				},
 				&ast.KeyValueExpr{
-					Key: &ast.Ident{Name: "Mode"},
-					Value: &ast.BasicLit{
-						Kind:  token.INT,
-						Value: strconv.Itoa(int(file.Mode)),
-					},
+					Key:   ident("Mode"),
+					Value: intLiteral(int(file.Mode)),
 				},
 				&ast.KeyValueExpr{
-					Key: &ast.Ident{Name: "ModTime"},
-					Value: &ast.CallExpr{
-						Fun: &ast.SelectorExpr{
-							X:   &ast.Ident{Name: "time"},
-							Sel: &ast.Ident{Name: "Unix"},
-						},
-						Args: []ast.Expr{
-							&ast.BasicLit{
-								Kind:  token.INT,
-								Value: strconv.Itoa(int(file.ModTime.Unix())),
-							},
-							&ast.BasicLit{
-								Kind:  token.INT,
-								Value: strconv.Itoa(int(file.ModTime.Nanosecond())),
-							},
-						},
-					},
+					Key: ident("ModTime"),
+					Value: callExpr(selExpr("time", "Unix"),
+						intLiteral(int(file.ModTime.Unix())),
+						intLiteral(file.ModTime.Nanosecond()),
+					),
 				},
 				&ast.KeyValueExpr{
-					Key: &ast.Ident{Name: "Compression"},
-					Value: &ast.SelectorExpr{
-						X:   &ast.Ident{Name: "binclude"},
-						Sel: &ast.Ident{Name: compressionName},
-					},
+					Key:   ident("Compression"),
+					Value: selExpr("binclude", compressionName),
 				},
 				&ast.KeyValueExpr{
-					Key:   &ast.Ident{Name: "Content"},
+					Key:   ident("Content"),
 					Value: x,
 				},
 			},
@@ -136,28 +103,20 @@ func fileSystem2Ast(pkgName string, fs *binclude.FileSystem, buildTag string) *a
 	}
 
 	astVars := append(astConsts, &ast.ValueSpec{
-		Names: []*ast.Ident{
-			{Name: fsName},
-		},
+		Names: []*ast.Ident{ident(fsName)},
 		Values: []ast.Expr{
 			&ast.UnaryExpr{
 				Op: token.AND,
 				X: &ast.CompositeLit{
-					Type: &ast.SelectorExpr{
-						X:   &ast.Ident{Name: "binclude"},
-						Sel: &ast.Ident{Name: "FileSystem"},
-					},
+					Type: selExpr("binclude", "FileSystem"),
 					Elts: []ast.Expr{
 						&ast.KeyValueExpr{
-							Key: &ast.Ident{Name: "Files"},
+							Key: ident("Files"),
 							Value: &ast.CompositeLit{
 								Type: &ast.MapType{
-									Key: &ast.Ident{Name: "string"},
+									Key: ident("string"),
 									Value: &ast.StarExpr{
-										X: &ast.SelectorExpr{
-											X:   &ast.Ident{Name: "binclude"},
-											Sel: &ast.Ident{Name: "File"},
-										},
+										X: selExpr("binclude", "File"),
 									},
 								},
 								Elts: astFiles,
@@ -169,22 +128,10 @@ func fileSystem2Ast(pkgName string, fs *binclude.FileSystem, buildTag string) *a
 		},
 	})
 
-	imports := []ast.Spec{
-		&ast.ImportSpec{
-			Path: &ast.BasicLit{
-				Kind:  token.STRING,
-				Value: "\"github.com/lu4p/binclude\"",
-			},
-		},
-	}
+	imports := []ast.Spec{importSpec("github.com/lu4p/binclude")}
 
 	if len(astFiles) > 0 {
-		imports = append(imports, &ast.ImportSpec{
-			Path: &ast.BasicLit{
-				Kind:  token.STRING,
-				Value: "\"time\"",
-			},
-		})
+		imports = append(imports, importSpec("time"))
 	}
 
 	return &ast.File{
@@ -197,16 +144,10 @@ func fileSystem2Ast(pkgName string, fs *binclude.FileSystem, buildTag string) *a
 			},
 		},
 		Package: 45,
-		Name:    &ast.Ident{Name: pkgName},
+		Name:    ident(pkgName),
 		Decls: []ast.Decl{
-			&ast.GenDecl{
-				Tok:   token.IMPORT,
-				Specs: imports,
-			},
-			&ast.GenDecl{
-				Tok:   token.VAR,
-				Specs: astVars,
-			},
+			genDecl(token.IMPORT, imports),
+			genDecl(token.VAR, astVars),
 		},
 	}
 }
@@ -238,62 +179,30 @@ func generateFile(pkgName string, fs *binclude.FileSystem) error {
 func generateTagFile(pkgName string, fs *binclude.FileSystem, buildTag string) error {
 	bincludeFile := fileSystem2Ast(pkgName, fs, buildTag)
 
-	bincludeFile.Decls = append(bincludeFile.Decls, &ast.FuncDecl{
-		Name: &ast.Ident{
-			Name: "init",
-		},
+	decl := &ast.FuncDecl{
+		Name: ident("init"),
 		Type: &ast.FuncType{
 			Params: &ast.FieldList{},
 		},
-		Body: &ast.BlockStmt{
-			List: []ast.Stmt{
-				&ast.ExprStmt{
-					X: &ast.CallExpr{
-						Fun: &ast.SelectorExpr{
-							X:   &ast.Ident{Name: "BinFS"},
-							Sel: &ast.Ident{Name: "Lock"},
-						},
+		Body: blockStmt(
+			exprStmt(callExpr(selExpr("BinFS", "Lock"))),
+			&ast.RangeStmt{
+				Key:   ident("path"),
+				Value: ident("file"),
+				Tok:   token.DEFINE,
+				X:     selExpr("_binfs"+buildTag, "Files"),
+				Body: blockStmt(&ast.AssignStmt{
+					Lhs: []ast.Expr{
+						indexExpr(selExpr("BinFS", "Files"), ident("path")),
 					},
-				},
-				&ast.RangeStmt{
-					Key:   &ast.Ident{Name: "path"},
-					Value: &ast.Ident{Name: "file"},
-					Tok:   token.DEFINE,
-					X: &ast.SelectorExpr{
-						X:   &ast.Ident{Name: "_binfs" + buildTag},
-						Sel: &ast.Ident{Name: "Files"},
-					},
-					Body: &ast.BlockStmt{
-						List: []ast.Stmt{
-							&ast.AssignStmt{
-								Lhs: []ast.Expr{
-									&ast.IndexExpr{
-										X: &ast.SelectorExpr{
-											X:   &ast.Ident{Name: "BinFS"},
-											Sel: &ast.Ident{Name: "Files"},
-										},
-										Index: &ast.Ident{Name: "path"},
-									},
-								},
-								Tok: token.ASSIGN,
-								Rhs: []ast.Expr{
-									&ast.Ident{Name: "file"},
-								},
-							},
-						},
-					},
-				},
-				&ast.ExprStmt{
-					X: &ast.CallExpr{
-						Fun: &ast.SelectorExpr{
-							X:   &ast.Ident{Name: "BinFS"},
-							Sel: &ast.Ident{Name: "Unlock"},
-						},
-					},
-				},
+					Tok: token.ASSIGN,
+					Rhs: []ast.Expr{ident("file")},
+				}),
 			},
-		},
-	})
+			exprStmt(callExpr(selExpr("BinFS", "Unlock"))),
+		),
+	}
+	bincludeFile.Decls = append(bincludeFile.Decls, decl)
 
 	return writeAstToFile(bincludeFile, "binclude"+buildTag+".go")
 }
