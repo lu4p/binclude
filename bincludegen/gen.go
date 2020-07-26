@@ -49,40 +49,32 @@ func Main1() int {
 	return 0
 }
 
-type goFile struct {
-	path    string
-	astFile *ast.File
-}
-
 // Generate a binclude.go file for the current working directory
 func Generate(compress binclude.Compression) error {
-	paths, _ := filepath.Glob("*.go")
-
-	if len(paths) == 0 {
-		return errors.New("No .go files found in current working directory")
-	}
-
 	fset = token.NewFileSet()
-
-	var goFiles []goFile
-	for _, path := range paths {
-		if strings.HasSuffix(path, "binclude.go") {
-			continue
-		}
-
-		astFile, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
-		if err != nil {
-			return err
-		}
-		goFiles = append(goFiles, goFile{
-			path:    path,
-			astFile: astFile,
-		})
+	filter := func(info os.FileInfo) bool {
+		return !strings.HasPrefix(info.Name(), "binclude")
 	}
 
-	pkgName := goFiles[0].astFile.Name
+	pkgs, err := parser.ParseDir(fset, ".", filter, parser.ParseComments)
+	if err != nil {
+		return err
+	}
 
-	includedFiles, err := detectIncluded(goFiles)
+	if len(pkgs) > 1 {
+		return errors.New("More than one package in the current directory")
+	}
+
+	var (
+		pkg     *ast.Package
+		pkgName string
+	)
+
+	for pkgName, pkg = range pkgs {
+		break // only get the first package
+	}
+
+	includedFiles, err := detectIncluded(pkg)
 	if err != nil {
 		return err
 	}
@@ -173,7 +165,7 @@ type includedFile struct {
 	includedPath, goFile string
 }
 
-func detectIncluded(goFiles []goFile) ([]includedFile, error) {
+func detectIncluded(pkg *ast.Package) ([]includedFile, error) {
 	var includedFiles []includedFile
 
 	var currentGoFile string
@@ -224,9 +216,9 @@ func detectIncluded(goFiles []goFile) ([]includedFile, error) {
 		return true
 	}
 
-	for _, file := range goFiles {
-		currentGoFile = file.path
-		ast.Inspect(file.astFile, visit)
+	for path, file := range pkg.Files {
+		currentGoFile = path
+		ast.Inspect(file, visit)
 	}
 
 	for i, file := range includedFiles {

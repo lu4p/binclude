@@ -104,7 +104,7 @@ func fileToAst(path string, file *binclude.File, num int, buildTag string) (c *a
 	return c, m
 }
 
-func fileSystem2Ast(pkgName *ast.Ident, fs *binclude.FileSystem, buildTag string) *ast.File {
+func fileSystem2Ast(pkgName string, fs *binclude.FileSystem, buildTag string) *ast.File {
 	var (
 		astConsts []ast.Spec
 		astFiles  []ast.Expr
@@ -197,7 +197,7 @@ func fileSystem2Ast(pkgName *ast.Ident, fs *binclude.FileSystem, buildTag string
 			},
 		},
 		Package: 45,
-		Name:    pkgName,
+		Name:    &ast.Ident{Name: pkgName},
 		Decls: []ast.Decl{
 			&ast.GenDecl{
 				Tok:   token.IMPORT,
@@ -211,7 +211,7 @@ func fileSystem2Ast(pkgName *ast.Ident, fs *binclude.FileSystem, buildTag string
 	}
 }
 
-func generateFiles(pkgName *ast.Ident, fileSystems map[string]*binclude.FileSystem) error {
+func generateFiles(pkgName string, fileSystems map[string]*binclude.FileSystem) error {
 	for buildTag, fs := range fileSystems {
 		if buildTag == "default" {
 			err := generateFile(pkgName, fs)
@@ -229,13 +229,13 @@ func generateFiles(pkgName *ast.Ident, fileSystems map[string]*binclude.FileSyst
 	return nil
 }
 
-func generateFile(pkgName *ast.Ident, fs *binclude.FileSystem) error {
+func generateFile(pkgName string, fs *binclude.FileSystem) error {
 	bincludeFile := fileSystem2Ast(pkgName, fs, "")
 
 	return writeAstToFile(bincludeFile, "binclude.go")
 }
 
-func generateTagFile(pkgName *ast.Ident, fs *binclude.FileSystem, buildTag string) error {
+func generateTagFile(pkgName string, fs *binclude.FileSystem, buildTag string) error {
 	bincludeFile := fileSystem2Ast(pkgName, fs, buildTag)
 
 	bincludeFile.Decls = append(bincludeFile.Decls, &ast.FuncDecl{

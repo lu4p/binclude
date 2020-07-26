@@ -8,3 +8,4 @@ test/test.go
 profile.out
 /test
 binexec/example/testprg/testprg_darwin
+bincludegen/go.mod.txt
