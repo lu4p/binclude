@@ -122,13 +122,12 @@ func buildFS(includedFiles []includedFile) (map[string]*binclude.FileSystem, err
 			fileSystems[buildTag] = &binclude.FileSystem{}
 			fileSystems[buildTag].Files = make(binclude.Files)
 		}
-
-		fileSystems[buildTag].Files[path] = &binclude.File{
+		fileSystems[buildTag].CreateFile(path, &binclude.File{
 			Filename: info.Name(),
 			Mode:     info.Mode(),
 			ModTime:  info.ModTime(),
 			Content:  content,
-		}
+		})
 
 		return nil
 	}
@@ -189,7 +188,13 @@ func detectIncluded(pkg *ast.Package) ([]includedFile, error) {
 			return true
 		}
 
-		if !(sel.Sel.Name == "Include" || sel.Sel.Name == "IncludeFromFile") || v.Name != "binclude" {
+		if v.Name != "binclude" {
+			return true
+		}
+
+		switch sel.Sel.Name {
+		case "Include", "IncludeFromFile", "IncludeGlob":
+		default:
 			return true
 		}
 
@@ -203,15 +208,17 @@ func detectIncluded(pkg *ast.Package) ([]includedFile, error) {
 			log.Fatalln("cannot unquote string:", err)
 		}
 
-		if sel.Sel.Name == "IncludeFromFile" {
+		switch sel.Sel.Name {
+		case "Include":
+			includedFiles = append(includedFiles, includedFile{
+				goFile:       currentGoFile,
+				includedPath: value,
+			})
+		case "IncludeFromFile":
 			includedFiles = includeFromFile(value, currentGoFile, includedFiles)
-			return true
+		case "IncludeGlob":
+			includedFiles = includeGlob(value, currentGoFile, includedFiles)
 		}
-
-		includedFiles = append(includedFiles, includedFile{
-			goFile:       currentGoFile,
-			includedPath: value,
-		})
 
 		return true
 	}
@@ -261,6 +268,21 @@ func includeFromFile(value, currentGoFile string, includedFiles []includedFile) 
 		})
 	}
 
+	return includedFiles
+}
+
+func includeGlob(pattern, currentGoFile string, includedFiles []includedFile) []includedFile {
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		log.Fatalln("cannot glob:", pattern, "err:", err)
+	}
+
+	for _, match := range matches {
+		includedFiles = append(includedFiles, includedFile{
+			goFile:       currentGoFile,
+			includedPath: match,
+		})
+	}
 	return includedFiles
 }
 

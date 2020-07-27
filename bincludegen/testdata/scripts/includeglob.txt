@@ -1,0 +1,41 @@
+binclude
+cp $MOD_PATH go.mod
+go build
+exec ./main$exe
+cmp stderr main.stderr
+
+-- main.go --
+package main
+
+import (
+	"github.com/lu4p/binclude"
+)
+
+func main() {
+	binclude.IncludeGlob("./assets/*.txt")
+
+	infos, err := BinFS.ReadDir("./assets")
+	if err != nil {
+		panic(err)
+	}
+
+	for _, info := range infos {
+		println(info.Name())
+	}
+}
+
+-- assets/asset1.txt --
+asset1
+
+-- assets/asset2.txt --
+asset2
+
+-- subdir/subdirasset1.txt --
+subdirasset1
+
+-- subdir/subdirasset2.txt --
+subdirasset2
+
+-- main.stderr --
+asset1.txt
+asset2.txt

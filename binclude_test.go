@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/lu4p/binclude"
 	"github.com/lu4p/binclude/example"
@@ -49,6 +50,14 @@ func ExampleFileSystem_CopyFile() {
 	// Output: asset1
 }
 
+func ExampleIncludeGlob() {
+	binclude.IncludeGlob("./assets/*.txt")
+	f, _ := BinFS.Open("./assets/asset1.txt")
+	data, _ := ioutil.ReadAll(f)
+	fmt.Println(string(data))
+	// Output: asset1
+}
+
 func TestCopyFile(t *testing.T) {
 	err := BinFS.CopyFile("./assets/asset1.txt", "asset1.txt")
 	if err != nil {
@@ -69,6 +78,60 @@ func TestCopyFile(t *testing.T) {
 	if err == nil {
 		t.Fatal("can copy nonexistent file")
 	}
+}
+
+func TestCreateFile(t *testing.T) {
+	input := "test"
+	err := BinFS.CreateFile("./newdir/test.txt", &binclude.File{
+		Filename: "test.txt",
+		ModTime:  time.Now(),
+		Content:  []byte(input),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	out, err := BinFS.ReadFile("./newdir/test.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if string(out) != input {
+		t.Fatal("content doesn't match", out)
+	}
+
+	_, err = BinFS.Stat("./newdir")
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestMkdirFile(t *testing.T) {
+	err := BinFS.Mkdir("./testdir", os.ModePerm)
+	if err != nil {
+		t.Fatal(err)
+	}
+	info, err := BinFS.Stat("./testdir")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !info.IsDir() {
+		t.Fatal("Created directory is not a directory")
+	}
+
+	if err = BinFS.Mkdir("assets", os.ModePerm); err == nil {
+		t.Fatal("Can create existing directory")
+	}
+
+	binclude.Debug = true
+	defer os.Remove("osdirtest")
+
+	if err = BinFS.Mkdir("osdirtest", os.ModePerm); err != nil {
+		t.Fatal(err)
+	}
+
+	binclude.Debug = false
 }
 
 func TestCompression(t *testing.T) {

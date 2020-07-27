@@ -25,6 +25,11 @@ var Debug = false
 // This function returns the name to make it usable in global variable definitions.
 func Include(name string) string { return name }
 
+// IncludeGlob include all files matching the given pattern
+// same syntax as filepath.Glob
+// This function returns an empty string to make it usable in global variable definitions.
+func IncludeGlob(pattern string) string { return "" }
+
 // IncludeFromFile like include but reads paths from a textfile.
 // Paths are separated by a newline (noop)
 func IncludeFromFile(name string) {}
@@ -124,6 +129,46 @@ func (fs *FileSystem) CopyFile(bincludePath, hostPath string) error {
 	info, err = os.Stat(hostPath)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// CreateFile adds a new file to the fs (for internal binclude use)
+func (fs *FileSystem) CreateFile(path string, file *File) error {
+	dir := filepath.Dir(path)
+	_, err := fs.Stat(dir)
+	if err != nil {
+		err = fs.Mkdir(dir, os.ModePerm)
+		if err != nil {
+			return err
+		}
+	}
+
+	path = strings.TrimPrefix(path, "./")
+	fs.Files[path] = file
+	return nil
+}
+
+// Mkdir creates a new directory with the specified name and permission
+// bits (before umask).
+// If there is an error, it will be of type *os.PathError.
+func (fs *FileSystem) Mkdir(name string, perm os.FileMode) error {
+	name = strings.TrimPrefix(name, "./")
+	if Debug {
+		return os.Mkdir(name, perm)
+	}
+
+	_, err := fs.Stat(name)
+	if err == nil {
+		return &os.PathError{"mkdir", name, errors.New("Path already exists in Filesystem")}
+	}
+
+	fs.Files[name] = &File{
+		Filename: filepath.Base(name),
+		Mode:     os.ModeDir | perm,
+		ModTime:  time.Now(),
+		Content:  nil,
 	}
 
 	return nil
