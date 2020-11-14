@@ -1,4 +1,4 @@
-package binclude_test
+package bincludehttp_test
 
 import (
 	"fmt"
@@ -7,14 +7,18 @@ import (
 	"testing"
 
 	"github.com/lu4p/binclude"
+	"github.com/lu4p/binclude/bincludehttp"
 	"github.com/lu4p/binclude/example"
 )
 
 var BinFS = example.BinFS
+var wrappedFS = bincludehttp.Wrap(BinFS)
 
 func ExampleFileSystem_Open() {
 	binclude.Include("./assets")
-	f, _ := BinFS.Open("./assets/asset1.txt")
+
+	fs := bincludehttp.Wrap(BinFS)
+	f, _ := fs.Open("./assets/asset1.txt")
 	data, _ := ioutil.ReadAll(f)
 	fmt.Println(string(data))
 	// Output: asset1
@@ -22,14 +26,16 @@ func ExampleFileSystem_Open() {
 
 func ExampleFileSystem_ReadFile() {
 	binclude.Include("file.txt")
-	data, _ := BinFS.ReadFile("file.txt")
+	fs := bincludehttp.Wrap(BinFS)
+	data, _ := fs.ReadFile("file.txt")
 	fmt.Println(string(data))
 	// Output: file.txt
 }
 
 func ExampleFileSystem_ReadDir() {
 	binclude.Include("./assets")
-	infos, _ := BinFS.ReadDir("./assets")
+	fs := bincludehttp.Wrap(BinFS)
+	infos, _ := fs.ReadDir("./assets")
 	for _, info := range infos {
 		fmt.Println(info.Name())
 	}
@@ -37,24 +43,6 @@ func ExampleFileSystem_ReadDir() {
 	// asset2.txt
 	// logo_nocompress.png
 	// subdir
-}
-
-func ExampleFileSystem_CopyFile() {
-	BinFS.CopyFile("./assets/asset1.txt", "asset1.txt")
-
-	c, _ := ioutil.ReadFile("asset1.txt")
-
-	fmt.Println(string(c))
-
-	// Output: asset1
-}
-
-func ExampleIncludeGlob() {
-	binclude.IncludeGlob("./assets/*.txt")
-	f, _ := BinFS.Open("./assets/asset1.txt")
-	data, _ := ioutil.ReadAll(f)
-	fmt.Println(string(data))
-	// Output: asset1
 }
 
 func TestCopyFile(t *testing.T) {
@@ -81,17 +69,17 @@ func TestCopyFile(t *testing.T) {
 
 func TestCompression(t *testing.T) {
 	testPath := "assets/asset1.txt"
-	startContent, err := BinFS.ReadFile(testPath)
+	startContent, err := wrappedFS.ReadFile(testPath)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	err = BinFS.Compress(binclude.None)
+	err = wrappedFS.Compress(binclude.None)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	nocompressContent, err := BinFS.ReadFile(testPath)
+	nocompressContent, err := wrappedFS.ReadFile(testPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,16 +88,12 @@ func TestCompression(t *testing.T) {
 		t.Fatal("Compression with binclude.None should be a noop")
 	}
 
-	err = BinFS.Compress(binclude.Gzip)
+	err = wrappedFS.Compress(binclude.Gzip)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if BinFS.Files["assets/logo_nocompress.png"].Compression != binclude.None {
-		t.Fatal("Unexpected compressed png")
-	}
-
-	gzipContent, err := BinFS.ReadFile(testPath)
+	gzipContent, err := wrappedFS.ReadFile(testPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -118,12 +102,12 @@ func TestCompression(t *testing.T) {
 		t.Fatal("Gzip didn't compress")
 	}
 
-	err = BinFS.Decompress()
+	err = wrappedFS.Decompress()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	decGzipContent, err := BinFS.ReadFile(testPath)
+	decGzipContent, err := wrappedFS.ReadFile(testPath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -135,14 +119,14 @@ func TestCompression(t *testing.T) {
 }
 
 func TestReadFile(t *testing.T) {
-	_, err := BinFS.ReadFile("nonexistent.txt")
+	_, err := wrappedFS.ReadFile("nonexistent.txt")
 	if err == nil {
 		t.Fatal("shouldn't be able to read nonexistent file")
 	}
 }
 
 func TestOpen(t *testing.T) {
-	f, err := BinFS.Open("file.txt")
+	f, err := wrappedFS.Open("file.txt")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,14 +138,14 @@ func TestOpen(t *testing.T) {
 
 	f.Close()
 
-	f, err = BinFS.Open("nonexistent.txt")
+	f, err = wrappedFS.Open("nonexistent.txt")
 	if err == nil {
 		f.Close()
 		t.Fatal("nonexistent file can be opened")
 	}
 
 	binclude.Debug = true
-	f, err = BinFS.Open("go.mod")
+	f, err = wrappedFS.Open("../go.mod")
 	if err != nil {
 		t.Fatal("cannot use os filesystem")
 	}
@@ -171,54 +155,45 @@ func TestOpen(t *testing.T) {
 }
 
 func TestReadDir(t *testing.T) {
-	_, err := BinFS.ReadDir("./assets/asset1.txt")
+	_, err := wrappedFS.ReadDir("./assets/asset1.txt")
 	if err != nil {
 		t.Fatal("cannot read directory of file")
 	}
 
-	_, err = BinFS.ReadDir("./nonexistent")
+	_, err = wrappedFS.ReadDir("./nonexistent")
 	if err == nil {
 		t.Fatal("shouldn't be able to read nonexistent dir")
 	}
 }
 
 func TestStat(t *testing.T) {
-	_, err := BinFS.Stat("./assets/asset1.txt")
+	_, err := wrappedFS.Stat("./assets/asset1.txt")
 	if err != nil {
 		t.Fatal("cannot stat file")
 	}
 
-	_, err = BinFS.Stat("./nonexistent")
+	_, err = wrappedFS.Stat("./nonexistent")
 	if err == nil {
 		t.Fatal("shouldn't be able to stat nonexistent dir")
 	}
 }
 
 func TestFileInfo(t *testing.T) {
-	file := BinFS.Files["assets/asset1.txt"]
-	info, err := BinFS.Stat("./assets/asset1.txt")
+	info, err := wrappedFS.Stat("./assets/asset1.txt")
 	if err != nil {
 		t.Fatal("cannot stat file")
 	}
 
-	if info.Name() != file.Filename {
-		t.Fatal("Name does not match")
+	if info.Name() == "" {
+		t.Fatal("No name")
 	}
 
-	if int(info.Size()) != len(file.Content) {
+	if int(info.Size()) == 0 {
 		t.Fatal("Size does not match")
 	}
 
-	if info.Mode() != file.Mode {
-		t.Fatal("Mode does not match")
-	}
-
-	if info.IsDir() != file.Mode.IsDir() {
+	if info.IsDir() {
 		t.Fatal("IsDir does not match")
-	}
-
-	if info.ModTime() != file.ModTime {
-		t.Fatal("ModTime does not match")
 	}
 
 	if info.Sys() != nil {

@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/lu4p/binclude"
 )
@@ -122,7 +123,7 @@ func buildFS(includedFiles []includedFile) (map[string]*binclude.FileSystem, err
 			fileSystems[buildTag] = &binclude.FileSystem{}
 			fileSystems[buildTag].Files = make(binclude.Files)
 		}
-		fileSystems[buildTag].CreateFile(path, &binclude.File{
+		createFile(fileSystems[buildTag], path, &binclude.BincludeFile{
 			Filename: info.Name(),
 			Mode:     info.Mode(),
 			ModTime:  info.ModTime(),
@@ -288,4 +289,37 @@ func includeGlob(pattern, currentGoFile string, includedFiles []includedFile) []
 
 func remove(slice []string, s int) []string {
 	return append(slice[:s], slice[s+1:]...)
+}
+
+func createFile(fs *binclude.FileSystem, path string, file *binclude.BincludeFile) error {
+	dir := filepath.Dir(path)
+	_, err := fs.Stat(dir)
+	if err != nil {
+		err = mkdir(fs, dir, os.ModePerm)
+		if err != nil {
+			return err
+		}
+	}
+
+	path = strings.TrimPrefix(path, "./")
+	fs.Files[path] = file
+	return nil
+}
+
+func mkdir(fs *binclude.FileSystem, name string, perm os.FileMode) error {
+	name = strings.TrimPrefix(name, "./")
+
+	_, err := fs.Stat(name)
+	if err == nil {
+		return &os.PathError{"mkdir", name, errors.New("Path already exists in Filesystem")}
+	}
+
+	fs.Files[name] = &binclude.BincludeFile{
+		Filename: filepath.Base(name),
+		Mode:     os.ModeDir | perm,
+		ModTime:  time.Now(),
+		Content:  nil,
+	}
+
+	return nil
 }

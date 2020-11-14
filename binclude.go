@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -41,13 +40,33 @@ type FileSystem struct {
 }
 
 // Files a map from the filepath to the files
-type Files map[string]*File
+type Files map[string]*BincludeFile
 
-// check that the http.FileSystem interface is implemented
-var _ http.FileSystem = new(FileSystem)
+// GoString internally used for code generation
+func (fs *FileSystem) GoString() string {
+	var b strings.Builder
+	b.WriteString("&binclude.FileSystem{Files: binclude.Files{\n")
 
-// Open returns a File using the http.File interface
-func (fs *FileSystem) Open(name string) (http.File, error) {
+	var paths []string
+	for path := range fs.Files {
+		paths = append(paths, path)
+	}
+
+	sort.Strings(paths)
+
+	for _, path := range paths {
+		file := fs.Files[path]
+		b.WriteString(fmt.Sprintf("%q: %#v,\n", path, file))
+
+	}
+
+	b.WriteString("}}")
+
+	return b.String()
+}
+
+// Open returns a File using the File interface
+func (fs *FileSystem) Open(name string) (File, error) {
 	if Debug {
 		name = filepath.FromSlash(name)
 
@@ -134,48 +153,20 @@ func (fs *FileSystem) CopyFile(bincludePath, hostPath string) error {
 	return nil
 }
 
-// CreateFile adds a new file to the fs (for internal binclude use)
-func (fs *FileSystem) CreateFile(path string, file *File) error {
-	dir := filepath.Dir(path)
-	_, err := fs.Stat(dir)
-	if err != nil {
-		err = fs.Mkdir(dir, os.ModePerm)
-		if err != nil {
-			return err
-		}
-	}
-
-	path = strings.TrimPrefix(path, "./")
-	fs.Files[path] = file
-	return nil
-}
-
-// Mkdir creates a new directory with the specified name and permission
-// bits (before umask).
-// If there is an error, it will be of type *os.PathError.
-func (fs *FileSystem) Mkdir(name string, perm os.FileMode) error {
-	name = strings.TrimPrefix(name, "./")
-	if Debug {
-		return os.Mkdir(name, perm)
-	}
-
-	_, err := fs.Stat(name)
-	if err == nil {
-		return &os.PathError{"mkdir", name, errors.New("Path already exists in Filesystem")}
-	}
-
-	fs.Files[name] = &File{
-		Filename: filepath.Base(name),
-		Mode:     os.ModeDir | perm,
-		ModTime:  time.Now(),
-		Content:  nil,
-	}
-
-	return nil
-}
-
 // Compression the compression algorithm to use
 type Compression int
+
+// GoString internally used for code generation
+func (c Compression) GoString() string {
+	switch c {
+	case None:
+		return "binclude.None"
+	case Gzip:
+		return "binclude.Gzip"
+	}
+
+	panic(fmt.Sprint(int(c), "is not a valid compression algorithm"))
+}
 
 const (
 	// None dont compress
@@ -258,8 +249,17 @@ func shouldCompress(name string) bool {
 	return true
 }
 
-// File implements the io.Reader, io.Seeker, io.Closer and http.File interfaces
-type File struct {
+// File same as http.File
+type File interface {
+	io.Closer
+	io.Reader
+	io.Seeker
+	Readdir(count int) ([]os.FileInfo, error)
+	Stat() (os.FileInfo, error)
+}
+
+// BincludeFile implements the io.Reader, io.Seeker, io.Closer and http.File interfaces
+type BincludeFile struct {
 	Filename string
 	Mode     os.FileMode
 	ModTime  time.Time
@@ -270,21 +270,21 @@ type File struct {
 	fs     *FileSystem
 }
 
-// check that the http.File interface is implemented
-var _ http.File = new(File)
+// check that the File interface is implemented
+var _ File = new(BincludeFile)
 
 // Read implements the io.Reader interface.
-func (f *File) Read(p []byte) (n int, err error) {
+func (f *BincludeFile) Read(p []byte) (n int, err error) {
 	return f.reader.Read(p)
 }
 
 // Name returns the name of the file as presented to Open.
-func (f *File) Name() string {
+func (f *BincludeFile) Name() string {
 	return f.path
 }
 
 // Close closes the File, rendering it unusable for I/O.
-func (f *File) Close() error {
+func (f *BincludeFile) Close() error {
 	f.reader = nil
 	return nil
 }
@@ -293,7 +293,7 @@ func (f *File) Close() error {
 // Size is the number of bytes available for reading via ReadAt.
 // The returned value is always the same and is not affected by calls
 // to any other method.
-func (f *File) Size() int64 {
+func (f *BincludeFile) Size() int64 {
 	return int64(len(f.Content))
 }
 
@@ -301,7 +301,7 @@ func (f *File) Size() int64 {
 // returns a slice of up to n FileInfo values, as would be returned
 // by Lstat, in directory order. Subsequent calls on the same file will yield
 // further FileInfos.
-func (f *File) Readdir(count int) (infos []os.FileInfo, err error) {
+func (f *BincludeFile) Readdir(count int) (infos []os.FileInfo, err error) {
 	fileDir := f.Name()
 	if !f.Mode.IsDir() {
 		fileDir = filepath.Dir(f.path)
@@ -322,7 +322,7 @@ func (f *File) Readdir(count int) (infos []os.FileInfo, err error) {
 
 // Stat returns the FileInfo structure describing file.
 // Error is always nil
-func (f *File) Stat() (os.FileInfo, error) {
+func (f *BincludeFile) Stat() (os.FileInfo, error) {
 	return &FileInfo{
 		name:    f.Filename,
 		mode:    f.Mode,
@@ -332,8 +332,21 @@ func (f *File) Stat() (os.FileInfo, error) {
 }
 
 // Seek implements the io.Seeker interface.
-func (f *File) Seek(offset int64, whence int) (int64, error) {
+func (f *BincludeFile) Seek(offset int64, whence int) (int64, error) {
 	return f.reader.Seek(offset, whence)
+}
+
+func (f *BincludeFile) timeString() string {
+	return fmt.Sprint("time.Unix(", f.ModTime.Unix(), ", ", f.ModTime.UnixNano(), ")")
+}
+
+// GoString internally used for code generation
+func (f *BincludeFile) GoString() string {
+	return fmt.Sprintf(`{
+	Filename: %q, Mode: %O, ModTime: %s, Compression: %#v, 
+Content: []byte(%q),
+}`,
+		f.Filename, f.Mode, f.timeString(), f.Compression, f.Content)
 }
 
 // FileInfo implements the os.FileInfo interface.
