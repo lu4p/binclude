@@ -8,9 +8,9 @@
 binclude is a tool for including static files into Go binaries.
 - focuses on ease of use
 - the bincluded files add no more than the filesize to the binary
-- uses ast for typesafe parsing and code generation. [astextract](https://github.com/lu4p/astextract) was used for generating the ast definitions in the generator.
+- uses go/ast for typesafe parsing
 - each package can have its own `binclude.FileSystem`
-- `binclude.FileSystem` implements the `http.FileSystem` interface
+- optional `http.FileSystem` compatible wrapper, keeps binary sizes down as `net/http` is big
 - `ioutil` like functions `FileSystem.ReadFile`, `FileSystem.ReadDir`
 - include all files/ directories under a given path by calling `binclude.Include("./path")`
 - include files based on a glob pattern `binclude.IncludeGlob("./path/*.txt")`
@@ -82,7 +82,7 @@ go generate
 go build
 ```
 
-A complete example can be found [here](https://github.com/lu4p/binclude/tree/master/example).
+A more detailed example can be found [here](https://github.com/lu4p/binclude/tree/master/example).
 
 ## Binary size
 The resulting binary, with the included files can get quite large. 
