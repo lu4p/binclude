@@ -123,7 +123,7 @@ func buildFS(includedFiles []includedFile) (map[string]*binclude.FileSystem, err
 			fileSystems[buildTag] = &binclude.FileSystem{}
 			fileSystems[buildTag].Files = make(binclude.Files)
 		}
-		createFile(fileSystems[buildTag], path, &binclude.BincludeFile{
+		createFile(fileSystems[buildTag], path, &binclude.File{
 			Filename: info.Name(),
 			Mode:     info.Mode(),
 			ModTime:  info.ModTime(),
@@ -291,7 +291,7 @@ func remove(slice []string, s int) []string {
 	return append(slice[:s], slice[s+1:]...)
 }
 
-func createFile(fs *binclude.FileSystem, path string, file *binclude.BincludeFile) error {
+func createFile(fs *binclude.FileSystem, path string, file *binclude.File) error {
 	dir := filepath.Dir(path)
 	_, err := fs.Stat(dir)
 	if err != nil {
@@ -314,7 +314,7 @@ func mkdir(fs *binclude.FileSystem, name string, perm os.FileMode) error {
 		return &os.PathError{"mkdir", name, errors.New("Path already exists in Filesystem")}
 	}
 
-	fs.Files[name] = &binclude.BincludeFile{
+	fs.Files[name] = &binclude.File{
 		Filename: filepath.Base(name),
 		Mode:     os.ModeDir | perm,
 		ModTime:  time.Now(),

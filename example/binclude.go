@@ -10,12 +10,12 @@ import (
 var (
 	BinFS = &binclude.FileSystem{Files: binclude.Files{
 		".": {
-			Filename: ".", Mode: 0o20000000777, ModTime: time.Unix(1605393648, 1605393648943708810), Compression: binclude.None,
-			Content: []byte(""),
+			Filename: ".", Mode: 0o20000000777, ModTime: time.Unix(1605477588, 1605477588161392672), Compression: binclude.None,
+			Content: nil,
 		},
 		"assets": {
 			Filename: "assets", Mode: 0o20000000755, ModTime: time.Unix(1592948996, 1592948996973295835), Compression: binclude.None,
-			Content: []byte(""),
+			Content: nil,
 		},
 		"assets/asset1.txt": {
 			Filename: "asset1.txt", Mode: 0o644, ModTime: time.Unix(1592103949, 1592103949948920056), Compression: binclude.None,
@@ -31,7 +31,7 @@ var (
 		},
 		"assets/subdir": {
 			Filename: "subdir", Mode: 0o20000000755, ModTime: time.Unix(1592104033, 1592104033499898834), Compression: binclude.None,
-			Content: []byte(""),
+			Content: nil,
 		},
 		"assets/subdir/subdirasset1.txt": {
 			Filename: "subdirasset1.txt", Mode: 0o644, ModTime: time.Unix(1592104027, 1592104027425000000), Compression: binclude.None,

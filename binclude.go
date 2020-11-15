@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sort"
@@ -39,8 +40,11 @@ type FileSystem struct {
 	sync.RWMutex
 }
 
+// check that the http.FileSystem interface is implemented
+var _ http.FileSystem = new(FileSystem)
+
 // Files a map from the filepath to the files
-type Files map[string]*BincludeFile
+type Files map[string]*File
 
 // GoString internally used for code generation
 func (fs *FileSystem) GoString() string {
@@ -66,7 +70,7 @@ func (fs *FileSystem) GoString() string {
 }
 
 // Open returns a File using the File interface
-func (fs *FileSystem) Open(name string) (File, error) {
+func (fs *FileSystem) Open(name string) (http.File, error) {
 	if Debug {
 		name = filepath.FromSlash(name)
 
@@ -249,17 +253,8 @@ func shouldCompress(name string) bool {
 	return true
 }
 
-// File same as http.File
-type File interface {
-	io.Closer
-	io.Reader
-	io.Seeker
-	Readdir(count int) ([]os.FileInfo, error)
-	Stat() (os.FileInfo, error)
-}
-
-// BincludeFile implements the io.Reader, io.Seeker, io.Closer and http.File interfaces
-type BincludeFile struct {
+// File implements the http.File interface
+type File struct {
 	Filename string
 	Mode     os.FileMode
 	ModTime  time.Time
@@ -270,21 +265,21 @@ type BincludeFile struct {
 	fs     *FileSystem
 }
 
-// check that the File interface is implemented
-var _ File = new(BincludeFile)
+// check that the http.File interface is implemented
+var _ http.File = new(File)
 
 // Read implements the io.Reader interface.
-func (f *BincludeFile) Read(p []byte) (n int, err error) {
+func (f *File) Read(p []byte) (n int, err error) {
 	return f.reader.Read(p)
 }
 
 // Name returns the name of the file as presented to Open.
-func (f *BincludeFile) Name() string {
+func (f *File) Name() string {
 	return f.path
 }
 
 // Close closes the File, rendering it unusable for I/O.
-func (f *BincludeFile) Close() error {
+func (f *File) Close() error {
 	f.reader = nil
 	return nil
 }
@@ -293,7 +288,7 @@ func (f *BincludeFile) Close() error {
 // Size is the number of bytes available for reading via ReadAt.
 // The returned value is always the same and is not affected by calls
 // to any other method.
-func (f *BincludeFile) Size() int64 {
+func (f *File) Size() int64 {
 	return int64(len(f.Content))
 }
 
@@ -301,7 +296,7 @@ func (f *BincludeFile) Size() int64 {
 // returns a slice of up to n FileInfo values, as would be returned
 // by Lstat, in directory order. Subsequent calls on the same file will yield
 // further FileInfos.
-func (f *BincludeFile) Readdir(count int) (infos []os.FileInfo, err error) {
+func (f *File) Readdir(count int) (infos []os.FileInfo, err error) {
 	fileDir := f.Name()
 	if !f.Mode.IsDir() {
 		fileDir = filepath.Dir(f.path)
@@ -322,7 +317,7 @@ func (f *BincludeFile) Readdir(count int) (infos []os.FileInfo, err error) {
 
 // Stat returns the FileInfo structure describing file.
 // Error is always nil
-func (f *BincludeFile) Stat() (os.FileInfo, error) {
+func (f *File) Stat() (os.FileInfo, error) {
 	return &FileInfo{
 		name:    f.Filename,
 		mode:    f.Mode,
@@ -332,21 +327,25 @@ func (f *BincludeFile) Stat() (os.FileInfo, error) {
 }
 
 // Seek implements the io.Seeker interface.
-func (f *BincludeFile) Seek(offset int64, whence int) (int64, error) {
+func (f *File) Seek(offset int64, whence int) (int64, error) {
 	return f.reader.Seek(offset, whence)
 }
 
-func (f *BincludeFile) timeString() string {
+func (f *File) timeString() string {
 	return fmt.Sprint("time.Unix(", f.ModTime.Unix(), ", ", f.ModTime.UnixNano(), ")")
 }
 
 // GoString internally used for code generation
-func (f *BincludeFile) GoString() string {
+func (f *File) GoString() string {
+	content := "nil"
+	if f.Content != nil {
+		content = fmt.Sprintf("[]byte(%q)", f.Content)
+	}
 	return fmt.Sprintf(`{
 	Filename: %q, Mode: %O, ModTime: %s, Compression: %#v, 
-Content: []byte(%q),
+Content: %s,
 }`,
-		f.Filename, f.Mode, f.timeString(), f.Compression, f.Content)
+		f.Filename, f.Mode, f.timeString(), f.Compression, content)
 }
 
 // FileInfo implements the os.FileInfo interface.
