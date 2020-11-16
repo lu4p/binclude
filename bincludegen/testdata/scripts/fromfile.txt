@@ -38,6 +38,10 @@ func main() {
 	}
 }
 
+-- main_test.go --
+package main_test
+// testpackages should be excluded
+
 -- includefile.txt --
 ./assets
 file.txt

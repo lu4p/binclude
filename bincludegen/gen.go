@@ -196,12 +196,6 @@ func detectIncluded(pkg *ast.Package) ([]includedFile, error) {
 			return true
 		}
 
-		switch sel.Sel.Name {
-		case "Include", "IncludeFromFile", "IncludeGlob":
-		default:
-			return true
-		}
-
 		lit, ok := call.Args[0].(*ast.BasicLit)
 		if !ok || lit.Kind != token.STRING {
 			log.Fatalln("argument is not string literal")
@@ -298,10 +292,7 @@ func createFile(fs *binclude.FileSystem, path string, file *binclude.File) error
 	dir := filepath.Dir(path)
 	_, err := fs.Stat(dir)
 	if err != nil {
-		err = mkdir(fs, dir, os.ModePerm)
-		if err != nil {
-			return err
-		}
+		mkdir(fs, dir, os.ModePerm)
 	}
 
 	path = strings.TrimPrefix(path, "./")
@@ -309,13 +300,8 @@ func createFile(fs *binclude.FileSystem, path string, file *binclude.File) error
 	return nil
 }
 
-func mkdir(fs *binclude.FileSystem, name string, perm os.FileMode) error {
+func mkdir(fs *binclude.FileSystem, name string, perm os.FileMode) {
 	name = strings.TrimPrefix(name, "./")
-
-	_, err := fs.Stat(name)
-	if err == nil {
-		return &os.PathError{"mkdir", name, errors.New("Path already exists in Filesystem")}
-	}
 
 	fs.Files[name] = &binclude.File{
 		Filename: filepath.Base(name),
@@ -323,6 +309,4 @@ func mkdir(fs *binclude.FileSystem, name string, perm os.FileMode) error {
 		ModTime:  time.Now(),
 		Content:  nil,
 	}
-
-	return nil
 }

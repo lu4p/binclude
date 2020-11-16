@@ -1,0 +1,68 @@
+! exec binclude
+
+-- main.go --
+package main
+
+import (
+	"github.com/lu4p/binclude"
+)
+
+func main() {
+	binclude.Include("./assets")
+
+	anotherfile()
+
+	infos, err := BinFS.ReadDir("./assets")
+	if err != nil {
+		panic(err)
+	}
+
+	for _, info := range infos {
+		println("Name:", info.Name())
+	}
+}
+
+-- anotherfile.go --
+package wrongpackage
+
+import (
+	"io/ioutil"
+
+	"github.com/lu4p/binclude"
+)
+
+func anotherfile() {
+	binclude.Include("file.txt")
+
+	f, err := BinFS.Open("file.txt")
+	if err != nil {
+		panic(err)
+	}
+
+	out, err := ioutil.ReadAll(f)
+	if err != nil {
+		panic(err)
+	}
+
+	println(string(out))
+}
+
+-- assets/asset1.txt --
+asset1
+
+-- assets/asset2.txt --
+asset2
+
+-- subdir/subdirasset1.txt --
+subdirasset1
+
+-- subdir/subdirasset2.txt --
+subdirasset2
+
+-- file.txt --
+file
+-- main.stderr --
+file
+
+Name: asset1.txt
+Name: asset2.txt

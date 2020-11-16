@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"go/format"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"sort"
 
@@ -80,12 +79,6 @@ func init() {
 }
 
 func writeCodeToFile(filename string, code []byte) error {
-	f, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
 	fmtCode, err := format.Source([]byte(code))
 	if err != nil {
 		return err
@@ -115,23 +108,12 @@ func fsCode(fs *binclude.FileSystem, b *bytes.Buffer, fsName string) {
 func fileCode(f *binclude.File, b *bytes.Buffer, path string) {
 	fmt.Fprintf(b, "%q:{\n", path)
 
-	fmt.Fprintf(b, `Filename: %q, Mode: %O, ModTime: time.Unix(%d,%d), Compression: %s,`,
-		f.Filename, f.Mode, f.ModTime.Unix(), f.ModTime.UnixNano(), compStr(f.Compression))
+	fmt.Fprintf(b, `Filename: %q, Mode: %O, ModTime: time.Unix(%d,%d), Compression: %d,`,
+		f.Filename, f.Mode, f.ModTime.Unix(), f.ModTime.UnixNano(), f.Compression)
 
 	if f.Content != nil {
 		fmt.Fprintf(b, "\nContent: []byte(%q),", f.Content)
 	}
 
 	b.WriteString("\n},\n")
-}
-
-func compStr(c binclude.Compression) string {
-	switch c {
-	case binclude.None:
-		return "binclude.None"
-	case binclude.Gzip:
-		return "binclude.Gzip"
-	}
-
-	panic(fmt.Sprint(int(c), "is not a valid compression algorithm"))
 }
