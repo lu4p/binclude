@@ -6,6 +6,4 @@ import (
 	"github.com/lu4p/binclude"
 )
 
-var (
-	BinFS = &binclude.FileSystem{Files: binclude.Files{}}
-)
+var BinFS = &binclude.FileSystem{Files: binclude.Files{}}

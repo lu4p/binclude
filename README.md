@@ -156,7 +156,7 @@ import (
 )
 
 func main() {
-	bincludegen.Generate(binclude.None)
+	bincludegen.Generate(binclude.None, ".")
 	// binclude.None == no compression 
 	// binclude.Gzip == gzip compression
 }

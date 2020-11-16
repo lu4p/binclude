@@ -46,10 +46,9 @@ var _ http.FileSystem = new(FileSystem)
 // Files a map from the filepath to the files
 type Files map[string]*File
 
-// GoString internally used for code generation
-func (fs *FileSystem) GoString() string {
-	var b strings.Builder
-	b.WriteString("&binclude.FileSystem{Files: binclude.Files{\n")
+// Code internally used for code generation
+func (fs *FileSystem) Code(b *bytes.Buffer, fsName string) {
+	fmt.Fprintf(b, "var %s = &binclude.FileSystem{Files: binclude.Files{\n", fsName)
 
 	var paths []string
 	for path := range fs.Files {
@@ -60,13 +59,10 @@ func (fs *FileSystem) GoString() string {
 
 	for _, path := range paths {
 		file := fs.Files[path]
-		b.WriteString(fmt.Sprintf("%q: %#v,\n", path, file))
-
+		file.Code(b, path)
 	}
 
-	b.WriteString("}}")
-
-	return b.String()
+	b.WriteString("}}\n")
 }
 
 // Open returns a File using the File interface
@@ -335,17 +331,18 @@ func (f *File) timeString() string {
 	return fmt.Sprint("time.Unix(", f.ModTime.Unix(), ", ", f.ModTime.UnixNano(), ")")
 }
 
-// GoString internally used for code generation
-func (f *File) GoString() string {
-	content := "nil"
+// Code internally used for code generation
+func (f *File) Code(b *bytes.Buffer, path string) {
+	fmt.Fprintf(b, "%q:{\n", path)
+
+	fmt.Fprintf(b, `Filename: %q, Mode: %O, ModTime: %s, Compression: %#v,`,
+		f.Filename, f.Mode, f.timeString(), f.Compression)
+
 	if f.Content != nil {
-		content = fmt.Sprintf("[]byte(%q)", f.Content)
+		fmt.Fprintf(b, "\nContent: []byte(%q),", f.Content)
 	}
-	return fmt.Sprintf(`{
-	Filename: %q, Mode: %O, ModTime: %s, Compression: %#v, 
-Content: %s,
-}`,
-		f.Filename, f.Mode, f.timeString(), f.Compression, content)
+
+	b.WriteString("\n},\n")
 }
 
 // FileInfo implements the os.FileInfo interface.

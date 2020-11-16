@@ -5,8 +5,11 @@
 /asset1.txt
 binexec/example/testprg/testprg.exe
 test/test.go
-profile.out
 /test
 binexec/example/testprg/testprg_darwin
 bincludegen/go.mod.txt
 coverage.txt
+bincludegen/testdata/bench/includedPrg/includedPrg
+*.out
+bincludegen/testdata/bench/binclude.go
+*.test

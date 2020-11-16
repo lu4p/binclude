@@ -41,7 +41,7 @@ func Main1() int {
 
 	log.SetPrefix("[binclude] ")
 
-	err := Generate(compress)
+	err := Generate(compress, ".")
 	if err != nil {
 		log.Println("failed:", err)
 		return 1
@@ -51,13 +51,13 @@ func Main1() int {
 }
 
 // Generate a binclude.go file for the current working directory
-func Generate(compress binclude.Compression) error {
+func Generate(compress binclude.Compression, dir string) error {
 	fset = token.NewFileSet()
 	filter := func(info os.FileInfo) bool {
 		return !strings.HasPrefix(info.Name(), "binclude")
 	}
 
-	pkgs, err := parser.ParseDir(fset, ".", filter, parser.ParseComments)
+	pkgs, err := parser.ParseDir(fset, dir, filter, parser.ParseComments)
 	if err != nil {
 		return err
 	}
@@ -91,7 +91,7 @@ func Generate(compress binclude.Compression) error {
 		}
 	}
 
-	return generateFiles(pkgName, fileSystems)
+	return generateFiles(dir, pkgName, fileSystems)
 }
 
 func buildFS(includedFiles []includedFile) (map[string]*binclude.FileSystem, error) {
