@@ -1,6 +1,6 @@
 # binclude
 
-[![PkgGoDev](https://pkg.go.dev/badge/lu4p/binclude)](https://pkg.go.dev/lu4p/binclude)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/lu4p/binclude)](https://pkg.go.dev/github.com/lu4p/binclude)
 [![Test](https://github.com/lu4p/binclude/workflows/Test/badge.svg)](https://github.com/lu4p/binclude/actions?query=workflow%3ATest)
 [![Go Report Card](https://goreportcard.com/badge/github.com/lu4p/binclude)](https://goreportcard.com/report/github.com/lu4p/binclude)
 [![codecov](https://codecov.io/gh/lu4p/binclude/branch/master/graph/badge.svg)](https://codecov.io/gh/lu4p/binclude)
