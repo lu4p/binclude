@@ -54,6 +54,9 @@ func Main1() int {
 func Generate(compress binclude.Compression, dir string) error {
 	fset = token.NewFileSet()
 	filter := func(info os.FileInfo) bool {
+		if strings.Contains(info.Name(), "_test") {
+			return false
+		}
 		return !strings.HasPrefix(info.Name(), "binclude")
 	}
 
