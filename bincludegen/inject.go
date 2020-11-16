@@ -2,10 +2,12 @@ package bincludegen
 
 import (
 	"bytes"
+	"fmt"
 	"go/format"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/lu4p/binclude"
 )
@@ -31,7 +33,7 @@ package ` + pkgName + "\n"
 		fsName = "_binfs" + buildTag
 	}
 
-	fs.Code(b, fsName)
+	fsCode(fs, b, fsName)
 
 	return b
 }
@@ -90,4 +92,46 @@ func writeCodeToFile(filename string, code []byte) error {
 	}
 
 	return ioutil.WriteFile(filename, fmtCode, 0o666)
+}
+
+func fsCode(fs *binclude.FileSystem, b *bytes.Buffer, fsName string) {
+	fmt.Fprintf(b, "var %s = &binclude.FileSystem{Files: binclude.Files{\n", fsName)
+
+	var paths []string
+	for path := range fs.Files {
+		paths = append(paths, path)
+	}
+
+	sort.Strings(paths)
+
+	for _, path := range paths {
+		file := fs.Files[path]
+		fileCode(file, b, path)
+	}
+
+	b.WriteString("}}\n")
+}
+
+func fileCode(f *binclude.File, b *bytes.Buffer, path string) {
+	fmt.Fprintf(b, "%q:{\n", path)
+
+	fmt.Fprintf(b, `Filename: %q, Mode: %O, ModTime: time.Unix(%d,%d), Compression: %s,`,
+		f.Filename, f.Mode, f.ModTime.Unix(), f.ModTime.UnixNano(), compStr(f.Compression))
+
+	if f.Content != nil {
+		fmt.Fprintf(b, "\nContent: []byte(%q),", f.Content)
+	}
+
+	b.WriteString("\n},\n")
+}
+
+func compStr(c binclude.Compression) string {
+	switch c {
+	case binclude.None:
+		return "binclude.None"
+	case binclude.Gzip:
+		return "binclude.Gzip"
+	}
+
+	panic(fmt.Sprint(int(c), "is not a valid compression algorithm"))
 }

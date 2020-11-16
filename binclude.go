@@ -46,25 +46,6 @@ var _ http.FileSystem = new(FileSystem)
 // Files a map from the filepath to the files
 type Files map[string]*File
 
-// Code internally used for code generation
-func (fs *FileSystem) Code(b *bytes.Buffer, fsName string) {
-	fmt.Fprintf(b, "var %s = &binclude.FileSystem{Files: binclude.Files{\n", fsName)
-
-	var paths []string
-	for path := range fs.Files {
-		paths = append(paths, path)
-	}
-
-	sort.Strings(paths)
-
-	for _, path := range paths {
-		file := fs.Files[path]
-		file.Code(b, path)
-	}
-
-	b.WriteString("}}\n")
-}
-
 // Open returns a File using the File interface
 func (fs *FileSystem) Open(name string) (http.File, error) {
 	if Debug {
@@ -155,18 +136,6 @@ func (fs *FileSystem) CopyFile(bincludePath, hostPath string) error {
 
 // Compression the compression algorithm to use
 type Compression int
-
-// GoString internally used for code generation
-func (c Compression) GoString() string {
-	switch c {
-	case None:
-		return "binclude.None"
-	case Gzip:
-		return "binclude.Gzip"
-	}
-
-	panic(fmt.Sprint(int(c), "is not a valid compression algorithm"))
-}
 
 const (
 	// None dont compress
@@ -325,24 +294,6 @@ func (f *File) Stat() (os.FileInfo, error) {
 // Seek implements the io.Seeker interface.
 func (f *File) Seek(offset int64, whence int) (int64, error) {
 	return f.reader.Seek(offset, whence)
-}
-
-func (f *File) timeString() string {
-	return fmt.Sprint("time.Unix(", f.ModTime.Unix(), ", ", f.ModTime.UnixNano(), ")")
-}
-
-// Code internally used for code generation
-func (f *File) Code(b *bytes.Buffer, path string) {
-	fmt.Fprintf(b, "%q:{\n", path)
-
-	fmt.Fprintf(b, `Filename: %q, Mode: %O, ModTime: %s, Compression: %#v,`,
-		f.Filename, f.Mode, f.timeString(), f.Compression)
-
-	if f.Content != nil {
-		fmt.Fprintf(b, "\nContent: []byte(%q),", f.Content)
-	}
-
-	b.WriteString("\n},\n")
 }
 
 // FileInfo implements the os.FileInfo interface.
