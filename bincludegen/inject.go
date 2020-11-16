@@ -28,7 +28,7 @@ package ` + pkgName + "\n"
 	b.WriteString(")\n")
 
 	fsName := "BinFS"
-	if buildTag != "" {
+	if buildTag != "default" {
 		fsName = "_binfs" + buildTag
 	}
 
@@ -39,30 +39,26 @@ package ` + pkgName + "\n"
 
 func generateFiles(dir, pkgName string, fileSystems map[string]*binclude.FileSystem) error {
 	for buildTag, fs := range fileSystems {
+		code := generateFile(pkgName, fs, buildTag)
+
+		path := filepath.Join(dir, "binclude"+buildTag+".go")
 		if buildTag == "default" {
-			err := generateFile(dir, pkgName, fs)
-			if err != nil {
-				return err
-			}
-			continue
+			path = filepath.Join(dir, "binclude.go")
 		}
 
-		err := generateTagFile(dir, pkgName, fs, buildTag)
-		if err != nil {
+		if err := writeCodeToFile(path, code); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func generateFile(dir, pkgName string, fs *binclude.FileSystem) error {
-	path := filepath.Join(dir, "binclude.go")
-	b := generateCode(pkgName, fs, "")
-	return writeCodeToFile(path, b.Bytes())
-}
-
-func generateTagFile(dir, pkgName string, fs *binclude.FileSystem, buildTag string) error {
+func generateFile(pkgName string, fs *binclude.FileSystem, buildTag string) []byte {
 	b := generateCode(pkgName, fs, buildTag)
+
+	if buildTag == "default" {
+		return b.Bytes()
+	}
 
 	initFunc := `
 func init() {
@@ -74,8 +70,7 @@ func init() {
 }`
 
 	b.WriteString(initFunc)
-	path := filepath.Join(dir, "binclude"+buildTag+".go")
-	return writeCodeToFile(path, b.Bytes())
+	return b.Bytes()
 }
 
 func writeCodeToFile(filename string, code []byte) error {

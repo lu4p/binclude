@@ -22,8 +22,6 @@ var (
 	operatingSystems = []string{"linux", "windows", "darwin", "freebsd", "js", "plan9", "freebsd", "dragonfly", "openbsd", "solaris", "aix", "android"}
 	archs            = []string{"ppc64", "386", "amd64", "wasm", "arm", "ppc64le", "mips", "mips64", "mips64le", "mipsle", "s390x", "arm64"}
 
-	fset *token.FileSet
-
 	gzip bool
 )
 
@@ -52,7 +50,7 @@ func Main1() int {
 
 // Generate a binclude.go file for the current working directory
 func Generate(compress binclude.Compression, dir string) error {
-	fset = token.NewFileSet()
+	fset := token.NewFileSet()
 	filter := func(info os.FileInfo) bool {
 		if strings.Contains(info.Name(), "_test") {
 			return false
