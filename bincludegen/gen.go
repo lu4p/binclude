@@ -64,7 +64,7 @@ func Generate(compress binclude.Compression, dir string) error {
 	}
 
 	if len(pkgs) > 1 {
-		return errors.New("More than one package in the current directory")
+		return errors.New("more than one package in the current directory")
 	}
 
 	var (

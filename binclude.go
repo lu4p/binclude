@@ -126,12 +126,8 @@ func (fs *FileSystem) CopyFile(bincludePath, hostPath string) error {
 		return err
 	}
 
-	info, err = os.Stat(hostPath)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	_, err = os.Stat(hostPath)
+	return err
 }
 
 // Compression the compression algorithm to use
@@ -158,13 +154,13 @@ func (fs *FileSystem) Decompress() (err error) {
 		if file.Compression == Gzip {
 			compReader, err = gzip.NewReader(f)
 			if err != nil {
-				return fmt.Errorf("Gzip err: %v", err)
+				return fmt.Errorf("gzip err: %v", err)
 			}
 		}
 
 		content, err := ioutil.ReadAll(compReader)
 		if err != nil {
-			return fmt.Errorf("Reader err: %v", err)
+			return fmt.Errorf("reader err: %v", err)
 		}
 		f.Close()
 
@@ -267,7 +263,7 @@ func (f *File) Readdir(count int) (infos []os.FileInfo, err error) {
 		fileDir = filepath.Dir(f.path)
 	}
 
-	for path, file := range *&f.fs.Files {
+	for path, file := range f.fs.Files {
 		if filepath.Dir(path) != fileDir {
 			continue
 		}
