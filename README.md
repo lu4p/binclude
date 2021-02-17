@@ -1,3 +1,5 @@
+*New Projects should use the official [embed](https://golang.org/pkg/embed/) package instead, which was added in go 1.16.*
+
 # binclude
 
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/lu4p/binclude)](https://pkg.go.dev/github.com/lu4p/binclude)
